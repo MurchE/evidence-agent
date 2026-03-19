@@ -51,6 +51,9 @@ async function verify() {
   verdict.classList.add("hidden");
   sources.classList.add("hidden");
   sourceCards.innerHTML = "";
+  document.getElementById("followup").classList.add("hidden");
+  document.getElementById("followupAnswers").innerHTML = "";
+  lastResult = null;
   status.classList.remove("hidden");
   statusText.textContent = "Starting verification...";
 
@@ -168,6 +171,9 @@ async function speakText(text) {
   }
 }
 
+// --- Last result (for follow-ups) ---
+let lastResult = null;
+
 // --- Copy verdict ---
 function copyVerdict() {
   const claim = document.getElementById("verdictClaim").textContent;
@@ -215,6 +221,11 @@ function renderVerdict(data) {
 
   // Auto-narrate the verdict
   speakText(narration);
+
+  // Store full result for follow-ups
+  lastResult = data;
+  document.getElementById("followup").classList.remove("hidden");
+  document.getElementById("followupAnswers").innerHTML = "";
 }
 
 const STANCE_BADGE = {
@@ -302,3 +313,51 @@ function renderHistory() {
 
 // Show history on load
 renderHistory();
+
+// --- Follow-up Q&A ---
+async function askFollowup() {
+  const input = document.getElementById("followupInput");
+  const question = input.value.trim();
+  if (!question || !lastResult) return;
+
+  const answers = document.getElementById("followupAnswers");
+  // Show question immediately
+  answers.innerHTML += `
+    <div class="text-sm text-gray-300 bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3">
+      <p class="text-xs text-blue-400 font-semibold mb-1">You asked:</p>
+      <p>${question}</p>
+      <p class="text-gray-500 mt-2 italic" id="followupLoading">Thinking...</p>
+    </div>`;
+  input.value = "";
+
+  try {
+    const resp = await fetch(`${API_URL}/followup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        claim: claimInput.value.trim(),
+        verdict: lastResult.verdict,
+        summary: lastResult.summary,
+        sources: lastResult.sources || [],
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const loading = document.getElementById("followupLoading");
+    if (loading) loading.outerHTML = `<p class="mt-2">${data.answer}</p>`;
+
+    // Narrate the answer
+    speakText(data.answer);
+  } catch (err) {
+    const loading = document.getElementById("followupLoading");
+    if (loading) loading.textContent = "Failed to get answer: " + err.message;
+  }
+}
+
+// Enter key for follow-up
+document.getElementById("followupInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") askFollowup();
+});
