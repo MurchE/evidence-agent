@@ -168,6 +168,21 @@ async function speakText(text) {
   }
 }
 
+// --- Copy verdict ---
+function copyVerdict() {
+  const claim = document.getElementById("verdictClaim").textContent;
+  const v = verdictLabel.textContent;
+  const conf = confidenceNum.textContent;
+  const summary = verdictSummary.textContent;
+  const text = `Claim: ${claim}\nVerdict: ${v} (${conf})\n${summary}\n\n— Evidence Agent`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("shareBtnText");
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy verdict"; }, 2000);
+  });
+}
+
 // --- Render ---
 const VERDICT_STYLES = {
   SUPPORTED:   { bg: "bg-emerald-900/60", border: "border-emerald-500", barBg: "bg-emerald-400", text: "text-emerald-300" },
@@ -178,6 +193,9 @@ const VERDICT_STYLES = {
 function renderVerdict(data) {
   const v = data.verdict || "MURKY";
   const style = VERDICT_STYLES[v] || VERDICT_STYLES.MURKY;
+
+  // Show the original claim in the verdict banner
+  document.getElementById("verdictClaim").textContent = claimInput.value.trim();
 
   verdict.className = `mb-8 rounded-2xl p-6 text-center border ${style.bg} ${style.border}`;
   verdictLabel.textContent = v;

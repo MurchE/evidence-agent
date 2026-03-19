@@ -58,6 +58,7 @@
 
     <!-- Verdict banner -->
     <div id="verdict" class="hidden mb-8 rounded-2xl p-6 text-center">
+      <p id="verdictClaim" class="text-xs text-white/50 mb-2 italic"></p>
       <div class="text-sm font-medium uppercase tracking-widest mb-1 opacity-70">Verdict</div>
       <div class="flex items-center justify-center gap-3">
         <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
@@ -80,6 +81,16 @@
         <span id="confidenceNum" class="text-sm font-semibold"></span>
       </div>
       <p id="verdictSummary" class="text-sm opacity-80 max-w-xl mx-auto"></p>
+      <button
+        id="shareBtn"
+        onclick="copyVerdict()"
+        class="mt-4 text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-2M16 3h5v5M10 14L20.2 3.8"/>
+        </svg>
+        <span id="shareBtnText">Copy verdict</span>
+      </button>
     </div>
 
     <!-- Sources -->
