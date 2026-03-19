@@ -42,14 +42,7 @@ micBtn.addEventListener("mouseup", () => {
   if (recognition) recognition.stop();
 });
 
-// --- Verify ---
-const STATUS_STEPS = [
-  "Decomposing claim...",
-  "Fetching sources...",
-  "Evaluating evidence...",
-  "Synthesizing verdict...",
-];
-
+// --- Verify (SSE streaming) ---
 async function verify() {
   const claim = claimInput.value.trim();
   if (!claim) return;
@@ -59,16 +52,58 @@ async function verify() {
   sources.classList.add("hidden");
   sourceCards.innerHTML = "";
   status.classList.remove("hidden");
+  statusText.textContent = "Starting verification...";
 
-  // Animate status steps
-  let step = 0;
-  statusText.textContent = STATUS_STEPS[0];
-  const stepInterval = setInterval(() => {
-    step++;
-    if (step < STATUS_STEPS.length) {
-      statusText.textContent = STATUS_STEPS[step];
-    }
-  }, 3000);
+  try {
+    const evtSource = new EventSource(
+      `${API_URL}/verify/stream?claim=${encodeURIComponent(claim)}`
+    );
+
+    evtSource.addEventListener("step", (e) => {
+      const data = JSON.parse(e.data);
+      statusText.textContent = data.message;
+    });
+
+    evtSource.addEventListener("queries", (e) => {
+      const data = JSON.parse(e.data);
+      statusText.textContent = `Generated ${data.queries.length} search queries`;
+    });
+
+    evtSource.addEventListener("search_done", (e) => {
+      const data = JSON.parse(e.data);
+      statusText.textContent = `Found ${data.count} sources`;
+    });
+
+    evtSource.addEventListener("source_classified", (e) => {
+      const data = JSON.parse(e.data);
+      statusText.textContent = `Classified ${data.index}/${data.total}: ${data.title.slice(0, 40)}...`;
+    });
+
+    evtSource.addEventListener("result", (e) => {
+      const data = JSON.parse(e.data);
+      evtSource.close();
+      status.classList.add("hidden");
+      renderVerdict(data);
+      renderSources(data.sources || []);
+      saveToHistory(claim, data.verdict, data.confidence);
+    });
+
+    evtSource.onerror = () => {
+      evtSource.close();
+      status.classList.add("hidden");
+      // Fallback to non-streaming endpoint
+      verifyFallback(claim);
+    };
+  } catch (err) {
+    status.classList.add("hidden");
+    alert("Error: " + err.message);
+  }
+}
+
+// Fallback for browsers/environments where SSE doesn't work
+async function verifyFallback(claim) {
+  status.classList.remove("hidden");
+  statusText.textContent = "Analyzing claim...";
 
   try {
     const resp = await fetch(`${API_URL}/verify`, {
@@ -80,15 +115,12 @@ async function verify() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
 
-    clearInterval(stepInterval);
     status.classList.add("hidden");
     renderVerdict(data);
     renderSources(data.sources || []);
     saveToHistory(claim, data.verdict, data.confidence);
   } catch (err) {
-    clearInterval(stepInterval);
     status.classList.add("hidden");
-    statusText.textContent = "";
     alert("Error: " + err.message);
   }
 }

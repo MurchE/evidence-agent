@@ -3,6 +3,7 @@
 import os
 import json
 import asyncio
+from typing import AsyncGenerator
 import anthropic
 
 from firecrawl_client import FirecrawlClient
@@ -96,3 +97,62 @@ class EvidenceAgent:
             "summary": verdict_data.get("summary", ""),
             "sources": top_sources,
         }
+
+    async def verify_stream(self, claim: str) -> AsyncGenerator[str, None]:
+        """Streaming verification — yields SSE events for each pipeline step."""
+
+        def _sse(event: str, data: dict) -> str:
+            return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+        # Step 1: Decompose
+        yield _sse("step", {"step": "decompose", "message": "Decomposing claim into search queries..."})
+        queries = self._decompose_claim(claim)
+        yield _sse("queries", {"queries": queries})
+
+        # Step 2: Search
+        yield _sse("step", {"step": "search", "message": f"Searching {len(queries)} queries via Firecrawl..."})
+        sources = await self._search_all(queries)
+        yield _sse("search_done", {"count": len(sources)})
+
+        if not sources:
+            yield _sse("result", {
+                "verdict": "MURKY", "confidence": 0,
+                "summary": "No sources found. Unable to verify this claim.",
+                "sources": [],
+            })
+            return
+
+        # Step 3: Classify
+        yield _sse("step", {"step": "classify", "message": f"Classifying {len(sources)} sources..."})
+        loop = asyncio.get_event_loop()
+        classify_tasks = [
+            loop.run_in_executor(None, self.classifier.classify_source, claim, s)
+            for s in sources
+        ]
+
+        classified = []
+        for i, task in enumerate(asyncio.as_completed(classify_tasks)):
+            result = await task
+            classified.append(result)
+            yield _sse("source_classified", {
+                "index": i + 1,
+                "total": len(sources),
+                "title": result.get("title", ""),
+                "stance": result.get("stance", "NEUTRAL"),
+            })
+
+        classified.sort(key=lambda x: x.get("relevance", 0), reverse=True)
+        top_sources = classified[:5]
+
+        # Step 4: Synthesize
+        yield _sse("step", {"step": "synthesize", "message": "Synthesizing final verdict..."})
+        verdict_data = await loop.run_in_executor(
+            None, self.classifier.synthesize_verdict, claim, top_sources
+        )
+
+        yield _sse("result", {
+            "verdict": verdict_data.get("verdict", "MURKY"),
+            "confidence": verdict_data.get("confidence", 1),
+            "summary": verdict_data.get("summary", ""),
+            "sources": top_sources,
+        })

@@ -1,9 +1,9 @@
 """Evidence Agent — FastAPI backend."""
 
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -56,6 +56,19 @@ async def text_to_speech(req: TTSRequest):
         voice_id=req.voice_id or "21m00Tcm4TlvDq8ikWAM",
     )
     return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+@app.get("/verify/stream")
+async def verify_claim_stream(claim: str = Query(..., min_length=1)):
+    agent = EvidenceAgent()
+    return StreamingResponse(
+        agent.verify_stream(claim.strip()),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/health")
