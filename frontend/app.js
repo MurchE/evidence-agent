@@ -178,6 +178,9 @@ function renderSources(srcs) {
   sourceCards.innerHTML = srcs.map((s) => {
     const domain = new URL(s.url).hostname.replace("www.", "");
     const badge = STANCE_BADGE[s.stance] || STANCE_BADGE.NEUTRAL;
+    const cred = s.credibility || 5;
+    const credColor = cred >= 7 ? "text-emerald-400" : cred >= 4 ? "text-amber-400" : "text-red-400";
+    const credBarColor = cred >= 7 ? "bg-emerald-400" : cred >= 4 ? "bg-amber-400" : "bg-red-400";
     return `
       <div class="source-card bg-[#1A1A1A] border border-gray-800 rounded-xl p-5">
         <div class="flex items-center justify-between mb-2">
@@ -185,7 +188,17 @@ function renderSources(srcs) {
             <span class="text-xs text-gray-500">${domain}</span>
             <h3 class="font-semibold text-sm leading-tight">${s.title || domain}</h3>
           </div>
-          <span class="text-xs font-bold px-2 py-1 rounded ${badge}">${s.stance}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold px-2 py-1 rounded ${badge}">${s.stance}</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-gray-500">Credibility</span>
+          <div class="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full rounded-full ${credBarColor}" style="width: ${cred * 10}%"></div>
+          </div>
+          <span class="text-xs font-semibold ${credColor}">${cred}/10</span>
+          ${s.credibility_reason ? `<span class="text-xs text-gray-500 ml-1">— ${s.credibility_reason}</span>` : ""}
         </div>
         ${s.quote ? `<blockquote class="border-l-2 border-gray-600 pl-3 text-sm text-gray-400 italic mt-2">"${s.quote}"</blockquote>` : ""}
         <a href="${s.url}" target="_blank" class="text-xs text-blue-400 hover:underline mt-2 inline-block">View source</a>

@@ -9,9 +9,14 @@ CLASSIFY_PROMPT = """You are an evidence classifier. Given a CLAIM and a SOURCE,
 1. stance: Does this source SUPPORT, CONTRADICT, or remain NEUTRAL toward the claim?
 2. quote: Extract the single most relevant verbatim quote (max 2 sentences).
 3. relevance: Rate 1-10 how relevant this source is to the claim.
+4. credibility: Rate 1-10 how credible/trustworthy this source is, considering:
+   - Domain authority (e.g., .gov, .edu, major news outlets = high; random blogs = low)
+   - Whether the content cites data, studies, or named experts
+   - Writing quality and journalistic standards
+5. credibility_reason: One-sentence explanation of the credibility rating.
 
 Respond with JSON only:
-{"stance": "FOR|AGAINST|NEUTRAL", "quote": "...", "relevance": 1-10}
+{{"stance": "FOR|AGAINST|NEUTRAL", "quote": "...", "relevance": 1-10, "credibility": 1-10, "credibility_reason": "..."}}
 
 CLAIM: {claim}
 
@@ -74,12 +79,14 @@ class EvidenceClassifier:
             "quote": parsed.get("quote", ""),
             "stance": parsed.get("stance", "NEUTRAL"),
             "relevance": parsed.get("relevance", 1),
+            "credibility": parsed.get("credibility", 5),
+            "credibility_reason": parsed.get("credibility_reason", ""),
         }
 
     def synthesize_verdict(self, claim: str, classified_sources: list[dict]) -> dict:
         """Synthesize a final verdict from classified sources."""
         evidence_text = "\n".join(
-            f"- [{s['stance']}] {s['title']}: \"{s['quote']}\" (relevance: {s['relevance']})"
+            f"- [{s['stance']}] {s['title']}: \"{s['quote']}\" (relevance: {s['relevance']}, credibility: {s.get('credibility', 5)})"
             for s in classified_sources
         )
 
