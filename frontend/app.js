@@ -97,6 +97,44 @@ claimInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") verify();
 });
 
+// --- Voice Output (ElevenLabs TTS) ---
+let currentAudio = null;
+
+async function speakText(text) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
+  try {
+    const resp = await fetch(`${API_URL}/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!resp.ok) throw new Error(`TTS HTTP ${resp.status}`);
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.play();
+
+    // Update speaker button state
+    const speakerBtn = document.getElementById("speakerBtn");
+    if (speakerBtn) {
+      speakerBtn.classList.add("playing");
+      currentAudio.addEventListener("ended", () => {
+        speakerBtn.classList.remove("playing");
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+      });
+    }
+  } catch (err) {
+    console.warn("TTS unavailable:", err.message);
+  }
+}
+
 // --- Render ---
 const VERDICT_STYLES = {
   SUPPORTED:   { bg: "bg-emerald-900/60", border: "border-emerald-500", barBg: "bg-emerald-400", text: "text-emerald-300" },
@@ -119,6 +157,13 @@ function renderVerdict(data) {
 
   verdictSummary.textContent = data.summary || "";
   verdict.classList.remove("hidden");
+
+  // Store narration text for replay button
+  const narration = `Verdict: ${v}. Confidence: ${conf} out of 10. ${data.summary || ""}`;
+  verdictSummary.dataset.narration = narration;
+
+  // Auto-narrate the verdict
+  speakText(narration);
 }
 
 const STANCE_BADGE = {

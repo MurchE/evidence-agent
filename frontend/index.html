@@ -59,7 +59,19 @@
     <!-- Verdict banner -->
     <div id="verdict" class="hidden mb-8 rounded-2xl p-6 text-center">
       <div class="text-sm font-medium uppercase tracking-widest mb-1 opacity-70">Verdict</div>
-      <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
+      <div class="flex items-center justify-center gap-3">
+        <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
+        <button
+          id="speakerBtn"
+          title="Replay verdict"
+          onclick="if(currentAudio){currentAudio.pause();currentAudio=null;this.classList.remove('playing')}else{speakText(document.getElementById('verdictSummary').dataset.narration)}"
+          class="speaker-btn w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all mb-2"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+        </button>
+      </div>
       <div class="flex items-center justify-center gap-2 mb-3">
         <span class="text-sm opacity-70">Confidence</span>
         <div class="w-32 h-2 bg-black/20 rounded-full overflow-hidden">

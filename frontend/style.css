@@ -32,6 +32,17 @@ body {
   transform: translateY(-1px);
 }
 
+/* Speaker button pulse when playing */
+.speaker-btn.playing {
+  animation: speaker-pulse 1s ease-in-out infinite;
+  background: rgba(59, 130, 246, 0.3);
+}
+
+@keyframes speaker-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Smooth verdict entrance */
 #verdict {
   animation: fadeSlideUp 0.4s ease-out;
