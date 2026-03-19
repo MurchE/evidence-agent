@@ -84,6 +84,7 @@ async function verify() {
     status.classList.add("hidden");
     renderVerdict(data);
     renderSources(data.sources || []);
+    saveToHistory(claim, data.verdict, data.confidence);
   } catch (err) {
     clearInterval(stepInterval);
     status.classList.add("hidden");
@@ -207,3 +208,47 @@ function renderSources(srcs) {
 
   sources.classList.remove("hidden");
 }
+
+// --- Claim History (localStorage) ---
+const historySection = document.getElementById("history");
+const historyList = document.getElementById("historyList");
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem("ea_history") || "[]");
+  } catch { return []; }
+}
+
+function saveToHistory(claim, verdict, confidence) {
+  const history = getHistory();
+  history.unshift({ claim, verdict, confidence, ts: Date.now() });
+  // Keep last 10
+  localStorage.setItem("ea_history", JSON.stringify(history.slice(0, 10)));
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = getHistory();
+  if (!history.length) { historySection.classList.add("hidden"); return; }
+
+  historySection.classList.remove("hidden");
+  historyList.innerHTML = history.map((h) => {
+    const style = VERDICT_STYLES[h.verdict] || VERDICT_STYLES.MURKY;
+    const time = new Date(h.ts).toLocaleString();
+    return `
+      <button onclick="claimInput.value='${h.claim.replace(/'/g, "\\'")}';verify()"
+        class="w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3 hover:border-gray-600 transition-colors flex items-center justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm truncate">${h.claim}</p>
+          <span class="text-xs text-gray-500">${time}</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-xs font-bold ${style.text}">${h.verdict}</span>
+          <span class="text-xs text-gray-500">${h.confidence}/10</span>
+        </div>
+      </button>`;
+  }).join("");
+}
+
+// Show history on load
+renderHistory();
