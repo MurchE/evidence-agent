@@ -5,7 +5,7 @@ Voice-first claim verification tool. Speak or type a claim, and Evidence Agent s
 ## Architecture
 
 ```
-Claim → Decompose (3 queries) → Firecrawl search → Claude classification → Verdict
+Claim → Decompose (3 queries) → Firecrawl search → Claude classification → Verdict → ElevenLabs narration
 ```
 
 ## Setup
@@ -46,10 +46,21 @@ python -m http.server 3000
       "url": "https://example.com/study",
       "title": "Coffee and Cardiovascular Health",
       "quote": "Moderate consumption was associated with...",
-      "stance": "FOR"
+      "stance": "FOR",
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed journal with large sample size"
     }
   ]
 }
+```
+
+### POST /tts
+
+```json
+// Request
+{"text": "Verdict: SUPPORTED. Confidence: 8 out of 10.", "voice_id": "optional-voice-id"}
+
+// Response: audio/mpeg binary
 ```
 
 ## Keys Needed
@@ -58,4 +69,4 @@ python -m http.server 3000
 |-----|--------|
 | `FIRECRAWL_API_KEY` | [firecrawl.dev](https://firecrawl.dev) |
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
-| `ELEVENLABS_API_KEY` | [elevenlabs.io](https://elevenlabs.io) (future: voice output) |
+| `ELEVENLABS_API_KEY` | [elevenlabs.io](https://elevenlabs.io) — voice verdict narration |
