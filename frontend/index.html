@@ -43,6 +43,12 @@
       >
         Verify Claim
       </button>
+      <div class="flex flex-wrap gap-2 justify-center">
+        <span class="text-xs text-gray-500">Try:</span>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 px-3 py-1 rounded-full hover:bg-blue-900/40 transition-colors">Coffee prevents heart disease</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 px-3 py-1 rounded-full hover:bg-blue-900/40 transition-colors">The Great Wall is visible from space</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 px-3 py-1 rounded-full hover:bg-blue-900/40 transition-colors">Humans only use 10% of their brain</button>
+      </div>
     </div>
 
     <!-- Status -->
@@ -58,8 +64,21 @@
 
     <!-- Verdict banner -->
     <div id="verdict" class="hidden mb-8 rounded-2xl p-6 text-center">
+      <p id="verdictClaim" class="text-xs text-white/50 mb-2 italic"></p>
       <div class="text-sm font-medium uppercase tracking-widest mb-1 opacity-70">Verdict</div>
-      <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
+      <div class="flex items-center justify-center gap-3">
+        <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
+        <button
+          id="speakerBtn"
+          title="Replay verdict"
+          onclick="if(currentAudio){currentAudio.pause();currentAudio=null;this.classList.remove('playing')}else{speakText(document.getElementById('verdictSummary').dataset.narration)}"
+          class="speaker-btn w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all mb-2"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+        </button>
+      </div>
       <div class="flex items-center justify-center gap-2 mb-3">
         <span class="text-sm opacity-70">Confidence</span>
         <div class="w-32 h-2 bg-black/20 rounded-full overflow-hidden">
@@ -68,12 +87,47 @@
         <span id="confidenceNum" class="text-sm font-semibold"></span>
       </div>
       <p id="verdictSummary" class="text-sm opacity-80 max-w-xl mx-auto"></p>
+      <button
+        id="shareBtn"
+        onclick="copyVerdict()"
+        class="mt-4 text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-2M16 3h5v5M10 14L20.2 3.8"/>
+        </svg>
+        <span id="shareBtnText">Copy verdict</span>
+      </button>
     </div>
 
     <!-- Sources -->
     <div id="sources" class="hidden">
       <h2 class="text-xl font-bold mb-4">Sources</h2>
       <div id="sourceCards" class="space-y-4"></div>
+    </div>
+
+    <!-- Follow-up Q&A -->
+    <div id="followup" class="hidden mt-8">
+      <h2 class="text-xl font-bold mb-4">Ask a follow-up</h2>
+      <div class="flex gap-2">
+        <input
+          id="followupInput"
+          type="text"
+          placeholder="Ask about the evidence..."
+          class="flex-1 bg-[#1A1A1A] border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+        />
+        <button
+          id="followupBtn"
+          onclick="askFollowup()"
+          class="bg-blue-600 hover:bg-blue-500 font-semibold text-sm px-5 py-3 rounded-xl transition-colors shrink-0"
+        >Ask</button>
+      </div>
+      <div id="followupAnswers" class="mt-4 space-y-3"></div>
+    </div>
+
+    <!-- Claim History -->
+    <div id="history" class="mt-12 hidden">
+      <h2 class="text-xl font-bold mb-4 text-gray-300">Recent Checks</h2>
+      <div id="historyList" class="space-y-2"></div>
     </div>
   </div>
 
