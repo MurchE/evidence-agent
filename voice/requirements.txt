@@ -1,0 +1,4 @@
+elevenlabs>=0.3.5
+python-dotenv
+httpx
+pyaudio  # Required for DefaultAudioInterface (local mic/speaker)

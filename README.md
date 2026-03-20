@@ -52,10 +52,22 @@ python -m http.server 3000
 }
 ```
 
+## Voice (optional)
+
+There is a minimal `voice/` module that uses **ElevenLabs Conversational AI (Agents)**:
+
+```bash
+cd voice
+pip install -r requirements.txt
+cp .env.example .env
+python run_voice_agent.py
+```
+
 ## Keys Needed
 
 | Key | Source |
 |-----|--------|
 | `FIRECRAWL_API_KEY` | [firecrawl.dev](https://firecrawl.dev) |
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
-| `ELEVENLABS_API_KEY` | [elevenlabs.io](https://elevenlabs.io) (future: voice output) |
+| `ELEVENLABS_API_KEY` | [elevenlabs.io](https://elevenlabs.io) |
+| `ELEVENLABS_AGENT_ID` | ElevenLabs dashboard (Agents) |
