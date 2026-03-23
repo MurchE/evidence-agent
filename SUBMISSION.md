@@ -14,13 +14,28 @@ Claim → Decompose (3 search queries) → Firecrawl search → Claude classific
 
 ## How It Uses ElevenLabs
 
+Evidence Agent uses ElevenLabs in **two ways**:
+
+### 1. Browser TTS (verdict narration)
 Every verdict is **automatically narrated** via ElevenLabs TTS. When the agent finishes analyzing a claim, it synthesizes a spoken summary:
 
 > "Verdict: SUPPORTED. Confidence: 7 out of 10. Multiple peer-reviewed studies indicate moderate coffee consumption is associated with reduced cardiovascular risk."
 
-The voice output uses ElevenLabs' Multilingual v2 model with the Rachel voice for clear, authoritative narration. Follow-up answers are also narrated — the entire experience is voice-in, voice-out.
+The voice output uses ElevenLabs' Multilingual v2 model with the Rachel voice for clear, authoritative narration. Follow-up answers are also narrated.
 
-**ElevenLabs integration:** `backend/voice_synthesizer.py` — clean async wrapper around the TTS API with configurable voice, stability, and style settings.
+**Integration:** `backend/voice_synthesizer.py` — async wrapper around the TTS API.
+
+### 2. ElevenLabs Conversational AI Agent (voice loop)
+The `voice/` module implements a **full voice loop** using ElevenLabs Conversational AI Agents:
+
+- User speaks a claim into the mic
+- ElevenLabs Agent handles STT, then calls a `verify_claim` tool
+- The tool hits the Evidence Agent backend (`POST /verify`)
+- The agent speaks the verdict back via ElevenLabs TTS
+
+This creates a completely hands-free fact-checking experience — speak a claim, hear the verdict.
+
+**Integration:** `voice/run_voice_agent.py` — ElevenLabs `Conversation` SDK with `ClientTools` for tool calling.
 
 ## How It Uses Firecrawl
 
@@ -44,6 +59,7 @@ The full markdown content from Firecrawl enables deep source classification — 
 | Classification | Claude (Anthropic) | Source stance detection, credibility scoring, verdict synthesis |
 | Voice Output | ElevenLabs TTS | Spoken verdict narration |
 | Voice Input | Web Speech API | Browser-native speech recognition |
+| Voice Loop | ElevenLabs Conversational AI | Full STT→verify→TTS agent with tool calling |
 
 ## Key Features
 
@@ -95,6 +111,7 @@ uvicorn main:app --reload --port 8000
 | `FIRECRAWL_API_KEY` | [firecrawl.dev](https://firecrawl.dev) | Web search + scraping |
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | Claim decomposition, source classification, verdict |
 | `ELEVENLABS_API_KEY` | [elevenlabs.io](https://elevenlabs.io) | Voice narration of verdicts |
+| `ELEVENLABS_AGENT_ID` | ElevenLabs dashboard | Voice loop agent (optional — for `voice/` module) |
 
 ## Repo
 
