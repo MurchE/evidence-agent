@@ -49,7 +49,7 @@ Rules:
 class EvidenceClassifier:
     def __init__(self):
         self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-        self.model = "claude-sonnet-4-20250514"
+        self.model = "claude-haiku-4-5"
 
     def classify_source(self, claim: str, source: dict) -> dict:
         """Classify a single source's stance toward the claim."""
@@ -67,6 +67,12 @@ class EvidenceClassifier:
             messages=[{"role": "user", "content": prompt}],
         )
         text = resp.content[0].text.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("```", 2)[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
 
         try:
             parsed = json.loads(text)
@@ -98,6 +104,12 @@ class EvidenceClassifier:
             messages=[{"role": "user", "content": prompt}],
         )
         text = resp.content[0].text.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("```", 2)[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
 
         try:
             parsed = json.loads(text)

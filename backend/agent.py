@@ -27,11 +27,17 @@ class EvidenceAgent:
     def _decompose_claim(self, claim: str) -> list[str]:
         """Break a claim into 3 search queries."""
         resp = self.llm.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5",
             max_tokens=200,
             messages=[{"role": "user", "content": DECOMPOSE_PROMPT.format(claim=claim)}],
         )
         text = resp.content[0].text.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("```", 2)[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
 
         try:
             parsed = json.loads(text)
