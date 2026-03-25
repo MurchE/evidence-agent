@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8002";
 
 const claimInput = document.getElementById("claimInput");
 const micBtn = document.getElementById("micBtn");
