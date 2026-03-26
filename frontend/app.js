@@ -509,11 +509,9 @@ async function shareVerdict() {
 const DEMO_CACHE = {};
 async function loadDemoCache() {
   const demos = [
-    { claim: "Drinking coffee reduces Alzheimer's risk", file: "cache/coffee-alzheimers.json" },
-    { claim: "Exercise is more effective than antidepressants for mild depression", file: "cache/exercise-depression.json" },
-    { claim: "Vitamin C prevents the common cold", file: "cache/vitamin-c-cold.json" },
-    { claim: "Blue light glasses significantly improve sleep quality", file: "cache/blue-light-sleep.json" },
+    { claim: "Coffee prevents heart disease", file: "cache/coffee.json" },
     { claim: "Red wine in moderation is good for your heart", file: "cache/redwine.json" },
+    { claim: "Keto can lower your cholesterol", file: "cache/keto.json" },
   ];
   for (const d of demos) {
     try {
@@ -894,4 +892,53 @@ async function askFollowup(caseMode = null) {
 // Enter key for follow-up
 document.getElementById("followupInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") askFollowup();
+});
+
+// --- M-key mic activation (hold M to talk) ---
+let mKeyHeld = false;
+document.addEventListener("keydown", (e) => {
+  if (e.key === "m" || e.key === "M") {
+    if (mKeyHeld) return;
+    if (document.activeElement.tagName === "INPUT") return; // don't interfere with typing
+    mKeyHeld = true;
+    e.preventDefault();
+    
+    // If we have a verdict, activate follow-up mic
+    if (lastResult) {
+      stopAllAudio();
+      const followupInput = document.getElementById("followupInput");
+      if (followupInput) followupInput.placeholder = "🎙 Listening...";
+      if (recognition) {
+        recognition.onresult = (ev) => {
+          const transcript = ev.results[0][0].transcript;
+          document.getElementById("followupInput").value = transcript;
+          askFollowup();
+        };
+        recognition.start();
+      }
+    } else {
+      // No verdict yet — activate claim input mic
+      if (recognition) {
+        const micBtn = document.getElementById("micBtn");
+        if (micBtn) micBtn.classList.add("recording");
+        recognition.onresult = (ev) => {
+          const transcript = ev.results[0][0].transcript;
+          claimInput.value = transcript;
+          verify();
+        };
+        recognition.start();
+      }
+    }
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.key === "m" || e.key === "M") {
+    mKeyHeld = false;
+    if (recognition) recognition.stop();
+    const micBtn = document.getElementById("micBtn");
+    if (micBtn) micBtn.classList.remove("recording");
+    const followupInput = document.getElementById("followupInput");
+    if (followupInput) followupInput.placeholder = "Cross-examine the evidence...";
+  }
 });

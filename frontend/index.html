@@ -222,7 +222,7 @@
 
       <!-- Share buttons -->
       <div class="flex flex-wrap items-center justify-center gap-2">
-        <button onclick="shareVerdict()" class="text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 border border-blue-200 font-semibold">
+        <button onclick="shareVerdict()" class="text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 border border-border">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8.684 13.342A3 3 0 118.7 7.658M15.316 10.658A3 3 0 1115.3 16.342M8.7 10.5h6.6"/></svg>
           <span id="shareVerdictBtnText">Share Verdict</span>
         </button>
@@ -247,12 +247,12 @@
 
     <!-- Follow-up Q&A (BEFORE sources on mobile) -->
     <div id="followup" class="hidden mt-6">
-      <h2 class="text-lg font-bold mb-3 text-gray-800">Ask a follow-up</h2>
+      <h2 class="text-lg font-bold mb-3 text-gray-800">Cross-Examination</h2>
       <div class="flex flex-col sm:flex-row gap-2">
         <input
           id="followupInput"
           type="text"
-          placeholder="Ask about the evidence..."
+          placeholder="Cross-examine the evidence..."
           class="flex-1 bg-panel border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-gray-900 placeholder-gray-400"
           aria-label="Follow-up question"
         />
