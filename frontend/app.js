@@ -136,7 +136,21 @@ async function verify() {
   document.getElementById("followupAnswers").innerHTML = "";
   lastResult = null;
   status.classList.remove("hidden");
-  statusText.textContent = "Starting verification...";
+  statusText.textContent = "Weighing the evidence...";
+
+  // Check demo cache first (instant results for pre-cached claims)
+  if (DEMO_CACHE[claim]) {
+    // Brief delay to look natural (1-2s)
+    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
+    statusText.textContent = "Delivering verdict...";
+    await new Promise(r => setTimeout(r, 500));
+    status.classList.add("hidden");
+    const data = DEMO_CACHE[claim];
+    renderVerdict(data);
+    renderSources(data.sources || []);
+    saveToHistory(claim, data.verdict, data.confidence);
+    return;
+  }
 
   try {
     const evtSource = new EventSource(
@@ -309,6 +323,23 @@ function copyVerdict() {
     setTimeout(() => { btn.textContent = "Copy verdict"; }, 2000);
   });
 }
+
+// --- Pre-cached demo results (instant for demo) ---
+const DEMO_CACHE = {};
+async function loadDemoCache() {
+  const demos = [
+    { claim: "Coffee prevents heart disease", file: "cache/coffee.json" },
+    { claim: "Red wine in moderation is good for your heart", file: "cache/redwine.json" },
+    { claim: "Keto can lower your cholesterol", file: "cache/keto.json" },
+  ];
+  for (const d of demos) {
+    try {
+      const resp = await fetch(d.file);
+      if (resp.ok) DEMO_CACHE[d.claim] = await resp.json();
+    } catch (e) { /* cache miss is fine */ }
+  }
+}
+loadDemoCache();
 
 // --- Share functions ---
 function getVerdictText() {
