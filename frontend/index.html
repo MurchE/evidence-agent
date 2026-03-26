@@ -119,66 +119,57 @@
       </div>
     </div>
 
-    <!-- Status -->
+    <!-- Status (gavel animation) -->
     <div id="status" class="text-center text-muted mb-8 hidden">
-      <div class="inline-flex items-center gap-2">
-        <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
-        <span id="statusText">Analyzing claim...</span>
+      <div class="inline-flex items-center gap-3">
+        <span class="text-2xl animate-bounce">⚖️</span>
+        <span id="statusText" class="text-sm">Weighing the evidence...</span>
       </div>
     </div>
 
     <!-- Verdict banner -->
-    <div id="verdict" class="hidden mb-8 rounded-2xl p-6 relative border-2">
-      <!-- Top-right: discard + verify another -->
-      <div class="absolute top-3 right-3 flex items-center gap-1.5">
-        <button onclick="discardClaim()" title="Discard" class="w-7 h-7 rounded-full bg-black/5 hover:bg-red-100 flex items-center justify-center transition-all">
-          <svg class="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-        <button onclick="newClaim()" title="Verify another claim" class="w-7 h-7 rounded-full bg-black/5 hover:bg-blue-100 flex items-center justify-center transition-all">
-          <svg class="w-3.5 h-3.5 text-gray-400 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-      </div>
-
-      <!-- Main verdict layout: bull/bear | verdict | play controls -->
-      <div class="flex items-start gap-4">
-        <!-- Left: Bull & Bear -->
-        <div class="flex flex-col gap-2 pt-6">
-          <button onclick="askBullCase()" title="Strongest evidence FOR" class="w-10 h-10 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center transition-all text-xl" aria-label="Bull case">
-            🐂
-          </button>
-          <button onclick="askBearCase()" title="Strongest evidence AGAINST" class="w-10 h-10 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 flex items-center justify-center transition-all text-xl" aria-label="Bear case">
-            🐻
-          </button>
-        </div>
-
-        <!-- Center: Verdict content -->
-        <div class="flex-1 text-center">
-          <p id="verdictClaim" class="text-xs text-gray-500 mb-2 italic"></p>
-          <div class="text-xs font-medium uppercase tracking-widest mb-1 text-gray-500">Verdict</div>
-          <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
-        </div>
-
-        <!-- Right: Play/Pause + Speed -->
-        <div class="flex flex-col items-center gap-1 pt-6">
-          <button onclick="changeSpeed(0.25)" title="Faster" class="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-all">
-            <span class="text-[10px] text-gray-500 font-bold">+</span>
+    <div id="verdict" class="hidden mb-8 rounded-2xl p-6 relative border-2 text-center">
+      <p id="verdictClaim" class="text-xs text-gray-500 mb-2 italic"></p>
+      <div class="text-xs font-medium uppercase tracking-widest mb-1 text-gray-500">The evidence</div>
+      <div class="flex items-center justify-center gap-3">
+        <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
+        <!-- Play/Pause + Speed (inline, like before) -->
+        <div class="flex items-center gap-1.5 mb-2">
+          <button onclick="changeSpeed(-0.25)" title="Slower" class="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-all">
+            <span class="text-[10px] text-gray-500 font-bold">&minus;</span>
           </button>
           <button
             id="speakerBtn"
             title="Play / Pause"
             onclick="if(currentAudio){togglePlayPause()}else{speakText(document.getElementById('verdictSummary').dataset.narration)}"
-            class="speaker-btn w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-all text-white shadow-md"
+            class="speaker-btn w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-all text-white shadow-md"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </button>
-          <button onclick="changeSpeed(-0.25)" title="Slower" class="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-all">
-            <span class="text-[10px] text-gray-500 font-bold">&minus;</span>
+          <button onclick="changeSpeed(0.25)" title="Faster" class="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-all">
+            <span class="text-[10px] text-gray-500 font-bold">+</span>
           </button>
-          <span id="speedDisplay" class="text-[9px] text-muted">1.0x</span>
+          <span id="speedDisplay" class="text-[10px] text-muted ml-0.5">1.0x</span>
         </div>
+      </div>
+
+      <!-- Bull & Bear + Discard & Verify Another (horizontal rows inside verdict box) -->
+      <div class="flex items-center justify-center gap-3 my-3">
+        <button onclick="askBullCase()" title="Strongest evidence FOR" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all text-sm" aria-label="Bull case">
+          🐂 <span class="text-emerald-700 text-xs font-medium">Bull Case</span>
+        </button>
+        <button onclick="askBearCase()" title="Strongest evidence AGAINST" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 transition-all text-sm" aria-label="Bear case">
+          🐻 <span class="text-red-700 text-xs font-medium">Bear Case</span>
+        </button>
+        <span class="text-gray-300">|</span>
+        <button onclick="discardClaim()" title="Discard" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 border border-gray-200 transition-all">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+          <span class="text-gray-500 text-xs">Discard</span>
+        </button>
+        <button onclick="newClaim()" title="Verify another claim" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-blue-50 border border-gray-200 transition-all">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="text-gray-500 text-xs">New</span>
+        </button>
       </div>
       <div class="flex items-center justify-center gap-2 mb-3">
         <span class="text-sm text-gray-500">Confidence</span>

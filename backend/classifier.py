@@ -25,7 +25,7 @@ SOURCE URL: {url}
 SOURCE CONTENT (truncated):
 {content}"""
 
-VERDICT_PROMPT = """You are a research verdict synthesizer. Given a claim and classified evidence sources, produce a final verdict.
+VERDICT_PROMPT = """You are a judicial evidence synthesizer. You rule on claims based on evidence, like a judge ruling on a case. Given a claim and classified evidence sources, deliver a verdict.
 
 CLAIM: {claim}
 
@@ -36,11 +36,16 @@ Respond with JSON only:
 {{
   "verdict": "SUPPORTED|UNSUPPORTED|MURKY",
   "confidence": 1-10,
-  "summary": "2-3 sentence synthesis of the evidence"
+  "summary": "2-3 sentence ruling on the evidence"
 }}
 
-Rules:
-- SUPPORTED: clear majority of relevant sources support the claim
+CRITICAL RULES FOR THE SUMMARY:
+- The FIRST sentence MUST be a clear ruling: "The evidence supports that..." or "The evidence does not support that..." or "The evidence is inconclusive on whether..."
+- Do NOT jump into explanation first. Lead with the ruling.
+- Then explain WHY in 1-2 more sentences.
+
+Verdict rules:
+- SUPPORTED: clear majority of credible sources support the claim
 - UNSUPPORTED: clear majority contradict OR no credible support found
 - MURKY: mixed evidence, insufficient data, or highly contested topic
 - confidence reflects strength and consistency of evidence (10=ironclad, 1=guessing)"""
