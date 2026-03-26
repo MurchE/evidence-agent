@@ -354,6 +354,19 @@ function newClaim() {
   claimInput.focus();
 }
 
+// --- Bull & Bear (steelman / steelman-against) ---
+function askBullCase() {
+  const input = document.getElementById("followupInput");
+  input.value = "What is the strongest evidence supporting this claim? Steel-man the case FOR it.";
+  askFollowup();
+}
+
+function askBearCase() {
+  const input = document.getElementById("followupInput");
+  input.value = "What is the strongest evidence against this claim? Steel-man the case AGAINST it.";
+  askFollowup();
+}
+
 // --- Follow-up suggestions ---
 function generateFollowUps(claim, verdict, summary) {
   const suggestions = [];
