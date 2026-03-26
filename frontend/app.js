@@ -189,6 +189,46 @@ function copyVerdict() {
   });
 }
 
+// --- Share functions ---
+function getVerdictText() {
+  const claim = document.getElementById("verdictClaim").textContent;
+  const v = verdictLabel.textContent;
+  const conf = confidenceNum.textContent;
+  const summary = verdictSummary.textContent;
+  return { claim, v, conf, summary };
+}
+
+function shareToX() {
+  const { claim, v, conf } = getVerdictText();
+  const text = `Claim: "${claim}" → ${v} (${conf} confidence)\n\nVerified by Evidence Agent`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function shareToLinkedIn() {
+  const { claim, v, conf, summary } = getVerdictText();
+  const text = `I just verified a claim using Evidence Agent:\n\n"${claim}"\n\nVerdict: ${v} (${conf})\n${summary}`;
+  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(text)}`, '_blank');
+}
+
+function shareToEmail() {
+  const { claim, v, conf, summary } = getVerdictText();
+  const subject = `Evidence Check: ${claim}`;
+  const body = `I verified this claim using Evidence Agent:\n\nClaim: "${claim}"\nVerdict: ${v} (Confidence: ${conf})\n\n${summary}\n\n— Verified by Evidence Agent`;
+  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+}
+
+function newClaim() {
+  // Reset everything for a new claim
+  claimInput.value = "";
+  verdict.classList.add("hidden");
+  sources.classList.add("hidden");
+  sourceCards.innerHTML = "";
+  document.getElementById("followup").classList.add("hidden");
+  document.getElementById("followupAnswers").innerHTML = "";
+  lastResult = null;
+  claimInput.focus();
+}
+
 // --- Render ---
 const VERDICT_STYLES = {
   SUPPORTED:   { bg: "bg-emerald-900/60", border: "border-emerald-500", barBg: "bg-emerald-400", text: "text-emerald-300" },
