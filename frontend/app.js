@@ -363,6 +363,18 @@ document.addEventListener("keydown", (e) => {
 // --- Voice Output (ElevenLabs TTS) ---
 let currentAudio = null;
 let isPlaying = false;
+let isTTSLoading = false;
+
+function stopAllAudio() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  isPlaying = false;
+  isTTSLoading = false;
+  updatePlayBtn();
+}
 
 function togglePlayPause() {
   if (!currentAudio) return;
@@ -397,13 +409,13 @@ function changeSpeed(delta) {
 }
 
 async function speakText(text) {
-  // Always stop current audio first
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-    currentAudio = null;
-    isPlaying = false;
-    updatePlayBtn();
+  stopAllAudio();
+  if (isTTSLoading) return;
+  isTTSLoading = true;
+  const btn = document.getElementById("speakerBtn");
+  if (btn) {
+    btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>';
+    btn.classList.add("opacity-50");
   }
 
   try {
@@ -421,19 +433,19 @@ async function speakText(text) {
     currentAudio.playbackRate = playbackRate;
     currentAudio.play();
     isPlaying = true;
+    isTTSLoading = false;
+    if (btn) btn.classList.remove("opacity-50");
     updatePlayBtn();
-
-    // Update speaker button state
-    const speakerBtn = document.getElementById("speakerBtn");
-    if (speakerBtn) {
-      currentAudio.addEventListener("ended", () => {
-        isPlaying = false;
-        updatePlayBtn();
-        URL.revokeObjectURL(url);
-        currentAudio = null;
-      });
-    }
+    currentAudio.addEventListener("ended", () => {
+      isPlaying = false;
+      updatePlayBtn();
+      URL.revokeObjectURL(url);
+      currentAudio = null;
+    });
   } catch (err) {
+    isTTSLoading = false;
+    if (btn) btn.classList.remove("opacity-50");
+    updatePlayBtn();
     console.warn("TTS unavailable:", err.message);
   }
 }
