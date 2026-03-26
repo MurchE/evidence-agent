@@ -28,7 +28,7 @@ const EXAMPLE_CLAIMS = [
 let retryLastAction = null;
 let isVerifying = false;
 const defaultVerifyBtnLabel = verifyBtn ? verifyBtn.textContent.trim() : "Verify Claim";
-let selectedVoice = "murch"; // default to Murch's cloned voice
+let selectedVoice = "George"; // George — British, credible
 
 // --- Sidebar & Sources Panel ---
 // Each panel is independent — opening one does NOT affect the other
