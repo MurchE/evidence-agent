@@ -11,7 +11,79 @@ const confidenceBar = document.getElementById("confidenceBar");
 const confidenceNum = document.getElementById("confidenceNum");
 const verdictSummary = document.getElementById("verdictSummary");
 const sources = document.getElementById("sources");
-const sourceCards = document.getElementById("sourceCards");
+const sourceCards = document.getElementById("sourcePanelCards");
+let selectedVoice = "rachel"; // default ElevenLabs voice
+
+// --- Sidebar & Sources Panel ---
+function toggleSidebar() {
+  const sb = document.getElementById("sidebar");
+  const ov = document.getElementById("overlay");
+  sb.classList.toggle("closed");
+  if (!sb.classList.contains("closed")) {
+    ov.classList.remove("hidden");
+    renderSidebarHistory();
+  } else {
+    ov.classList.add("hidden");
+  }
+}
+
+function toggleSources() {
+  const sp = document.getElementById("sourcesPanel");
+  const ov = document.getElementById("overlay");
+  sp.classList.toggle("closed");
+  if (!sp.classList.contains("closed")) {
+    ov.classList.remove("hidden");
+  } else {
+    ov.classList.add("hidden");
+  }
+}
+
+function renderSidebarHistory() {
+  const history = getHistory();
+  const container = document.getElementById("sidebarHistory");
+  if (!history.length) {
+    container.innerHTML = '<p class="text-xs text-gray-600 text-center mt-8">No claims yet</p>';
+    return;
+  }
+  container.innerHTML = history.map((h) => {
+    const style = VERDICT_STYLES[h.verdict] || VERDICT_STYLES.MURKY;
+    const time = new Date(h.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const date = new Date(h.ts).toLocaleDateString();
+    return '<button onclick="claimInput.value=\'' + h.claim.replace(/'/g, "\\'") + '\';verify();toggleSidebar()" class="w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-lg px-3 py-2.5 hover:border-gray-600 transition-colors">' +
+      '<p class="text-xs truncate text-gray-300">' + h.claim + '</p>' +
+      '<div class="flex items-center justify-between mt-1">' +
+        '<span class="text-[10px] text-gray-600">' + date + ' ' + time + '</span>' +
+        '<span class="text-[10px] font-bold ' + style.text + '">' + h.verdict + ' ' + h.confidence + '/10</span>' +
+      '</div>' +
+    '</button>';
+  }).join("");
+}
+
+// --- Voice selector ---
+function setVoice(voiceId, voiceName) {
+  selectedVoice = voiceId;
+  document.querySelectorAll(".voice-option").forEach(el => el.classList.remove("active"));
+  const btn = document.getElementById("voice-" + voiceId);
+  if (btn) btn.classList.add("active");
+}
+
+// --- Discard claim (don't save to history) ---
+function discardClaim() {
+  verdict.classList.add("hidden");
+  sources.classList.add("hidden");
+  if (sourceCards) sourceCards.innerHTML = "";
+  document.getElementById("followup").classList.add("hidden");
+  document.getElementById("followupAnswers").innerHTML = "";
+  lastResult = null;
+  claimInput.value = "";
+  claimInput.focus();
+  // Remove last history entry (the one we just discarded)
+  const history = getHistory();
+  if (history.length > 0) {
+    history.pop();
+    localStorage.setItem("ea_history", JSON.stringify(history));
+  }
+}
 
 // --- Voice Input (Web Speech API) ---
 let recognition = null;
@@ -146,7 +218,7 @@ async function speakText(text) {
     const resp = await fetch(`${API_URL}/tts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, voice: selectedVoice }),
     });
 
     if (!resp.ok) throw new Error(`TTS HTTP ${resp.status}`);
@@ -276,6 +348,8 @@ const STANCE_BADGE = {
 
 function renderSources(srcs) {
   if (!srcs.length) return;
+  const sourceCount = document.getElementById("sourceCount");
+  if (sourceCount) sourceCount.textContent = srcs.length + " sources found — click to view details →";
 
   sourceCards.innerHTML = srcs.map((s) => {
     const domain = new URL(s.url).hostname.replace("www.", "");

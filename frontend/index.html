@@ -8,13 +8,55 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .sidebar { transition: transform 0.3s ease; }
+    .sidebar.closed { transform: translateX(-100%); }
+    .sources-panel { transition: transform 0.3s ease; }
+    .sources-panel.closed { transform: translateX(100%); }
+    .voice-option { cursor: pointer; transition: all 0.15s; }
+    .voice-option:hover { background: rgba(255,255,255,0.1); }
+    .voice-option.active { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+  </style>
 </head>
-<body class="bg-[#0D0D0D] text-white min-h-screen font-[Inter]">
+<body class="bg-[#0D0D0D] text-white min-h-screen font-[Inter] overflow-x-hidden">
+
+  <!-- LEFT SIDEBAR — History -->
+  <div id="sidebar" class="sidebar closed fixed left-0 top-0 h-full w-72 bg-[#111] border-r border-gray-800 z-40 flex flex-col">
+    <div class="flex items-center justify-between p-4 border-b border-gray-800">
+      <h2 class="text-sm font-bold text-gray-300">History</h2>
+      <button onclick="toggleSidebar()" class="text-gray-500 hover:text-white text-lg">&times;</button>
+    </div>
+    <div id="sidebarHistory" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+  </div>
+
+  <!-- RIGHT PANEL — Sources -->
+  <div id="sourcesPanel" class="sources-panel closed fixed right-0 top-0 h-full w-80 bg-[#111] border-l border-gray-800 z-40 flex flex-col">
+    <div class="flex items-center justify-between p-4 border-b border-gray-800">
+      <h2 class="text-sm font-bold text-gray-300">Sources</h2>
+      <button onclick="toggleSources()" class="text-gray-500 hover:text-white text-lg">&times;</button>
+    </div>
+    <div id="sourcePanelCards" class="flex-1 overflow-y-auto p-3 space-y-3"></div>
+  </div>
+
+  <!-- Overlay for mobile -->
+  <div id="overlay" class="hidden fixed inset-0 bg-black/50 z-30" onclick="toggleSidebar();toggleSources()"></div>
+
+  <!-- MAIN CONTENT -->
   <div class="max-w-3xl mx-auto px-4 py-12">
-    <!-- Header -->
-    <div class="text-center mb-12">
-      <h1 class="text-4xl font-extrabold tracking-tight mb-2">Evidence Agent</h1>
-      <p class="text-gray-400 text-lg">Voice-first claim verification</p>
+    <!-- Top bar with history toggle -->
+    <div class="flex items-center justify-between mb-8">
+      <button onclick="toggleSidebar()" class="text-gray-500 hover:text-white text-sm flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        History
+      </button>
+      <div class="text-center">
+        <h1 class="text-3xl font-extrabold tracking-tight">Evidence Agent</h1>
+        <p class="text-gray-500 text-sm">Voice-first claim verification</p>
+      </div>
+      <button onclick="toggleSources()" class="text-gray-500 hover:text-white text-sm flex items-center gap-1.5">
+        Sources
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
     </div>
 
     <!-- Input area -->
@@ -66,7 +108,13 @@
     </div>
 
     <!-- Verdict banner -->
-    <div id="verdict" class="hidden mb-8 rounded-2xl p-6 text-center">
+    <div id="verdict" class="hidden mb-8 rounded-2xl p-6 relative">
+      <!-- Top-right actions -->
+      <div class="absolute top-3 right-3 flex items-center gap-2">
+        <button onclick="newClaim()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors">Ask Another</button>
+        <button onclick="discardClaim()" class="text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1.5 rounded-lg transition-colors">Discard</button>
+      </div>
+
       <p id="verdictClaim" class="text-xs text-white/50 mb-2 italic"></p>
       <div class="text-sm font-medium uppercase tracking-widest mb-1 opacity-70">Verdict</div>
       <div class="flex items-center justify-center gap-3">
@@ -89,16 +137,33 @@
         </div>
         <span id="confidenceNum" class="text-sm font-semibold"></span>
       </div>
-      <p id="verdictSummary" class="text-sm opacity-80 max-w-xl mx-auto"></p>
-      <!-- Action buttons row -->
-      <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+      <p id="verdictSummary" class="text-sm opacity-80 max-w-xl mx-auto mb-4"></p>
+
+      <!-- Voice selector + powered by -->
+      <div class="flex items-center justify-center gap-4 mb-3">
+        <span class="text-[10px] text-gray-600 uppercase tracking-wider">Voice:</span>
+        <div class="flex gap-1.5">
+          <button onclick="setVoice('rachel','Rachel')" class="voice-option text-[10px] text-gray-400 px-2.5 py-1 rounded-md border border-gray-700" id="voice-rachel">Rachel</button>
+          <button onclick="setVoice('George','George')" class="voice-option text-[10px] text-gray-400 px-2.5 py-1 rounded-md border border-gray-700" id="voice-George">George 🇬🇧</button>
+          <button onclick="setVoice('Josh','Josh')" class="voice-option text-[10px] text-gray-400 px-2.5 py-1 rounded-md border border-gray-700" id="voice-Josh">Josh</button>
+        </div>
+      </div>
+      <div class="text-center">
+        <span class="text-[10px] text-gray-600">Powered by</span>
+        <span class="text-[10px] text-gray-400 font-semibold ml-1">ElevenLabs</span>
+        <span class="text-[10px] text-gray-600 mx-1">×</span>
+        <span class="text-[10px] text-gray-400 font-semibold">Firecrawl</span>
+      </div>
+
+      <!-- Share buttons -->
+      <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
         <button onclick="copyVerdict()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-2M16 3h5v5M10 14L20.2 3.8"/></svg>
           <span id="shareBtnText">Copy</span>
         </button>
         <button onclick="shareToX()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          X / Twitter
+          X
         </button>
         <button onclick="shareToLinkedIn()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -108,16 +173,20 @@
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           Email
         </button>
-        <button onclick="newClaim()" class="text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-900/20 hover:bg-emerald-900/40 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 font-semibold">
-          + New Claim
-        </button>
       </div>
     </div>
 
-    <!-- Sources -->
+    <!-- Sources summary (inline, opens panel) -->
     <div id="sources" class="hidden">
-      <h2 class="text-xl font-bold mb-4">Sources</h2>
-      <div id="sourceCards" class="space-y-4"></div>
+      <button onclick="toggleSources()" class="w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-xl px-5 py-4 hover:border-gray-600 transition-colors">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-gray-300">Sources Found</h3>
+            <p id="sourceCount" class="text-xs text-gray-500">Click to view details →</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </button>
     </div>
 
     <!-- Follow-up Q&A -->
@@ -139,10 +208,9 @@
       <div id="followupAnswers" class="mt-4 space-y-3"></div>
     </div>
 
-    <!-- Claim History -->
-    <div id="history" class="mt-12 hidden">
-      <h2 class="text-xl font-bold mb-4 text-gray-300">Recent Checks</h2>
-      <div id="historyList" class="space-y-2"></div>
+    <!-- Old history section hidden (replaced by sidebar) -->
+    <div id="history" class="hidden">
+      <div id="historyList"></div>
     </div>
   </div>
 
