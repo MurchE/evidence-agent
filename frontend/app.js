@@ -339,15 +339,61 @@ function shareToEmail() {
 }
 
 function newClaim() {
-  // Reset everything for a new claim
   claimInput.value = "";
   verdict.classList.add("hidden");
   sources.classList.add("hidden");
   sourceCards.innerHTML = "";
   document.getElementById("followup").classList.add("hidden");
   document.getElementById("followupAnswers").innerHTML = "";
+  const suggestions = document.getElementById("followupSuggestions");
+  if (suggestions) suggestions.remove();
   lastResult = null;
+  // Show examples again
+  const examples = document.getElementById("exampleClaims");
+  if (examples) examples.classList.remove("hidden");
   claimInput.focus();
+}
+
+// --- Follow-up suggestions ---
+function generateFollowUps(claim, verdict, summary) {
+  const suggestions = [];
+  suggestions.push("What is the strongest evidence for this claim?");
+  suggestions.push("What is the strongest evidence against this claim?");
+  if (verdict === "MURKY") {
+    suggestions.push("Why is the evidence conflicting?");
+    suggestions.push("What would settle this debate?");
+  } else if (verdict === "SUPPORTED") {
+    suggestions.push("Are there any notable exceptions?");
+    suggestions.push("How strong is the scientific consensus?");
+  } else {
+    suggestions.push("Where did this myth originate?");
+    suggestions.push("What do people commonly confuse about this?");
+  }
+  return suggestions;
+}
+
+function renderFollowUpSuggestions(suggestions) {
+  const existing = document.getElementById("followupSuggestions");
+  if (existing) existing.remove();
+
+  const container = document.createElement("div");
+  container.id = "followupSuggestions";
+  container.className = "flex flex-wrap gap-2 mt-3";
+
+  suggestions.forEach(q => {
+    const btn = document.createElement("button");
+    btn.className = "text-xs text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors";
+    btn.textContent = q;
+    btn.onclick = () => {
+      document.getElementById("followupInput").value = q;
+      askFollowup();
+    };
+    container.appendChild(btn);
+  });
+
+  const followupSection = document.getElementById("followup");
+  const followupInput = followupSection.querySelector(".flex");
+  followupSection.insertBefore(container, followupInput);
 }
 
 // --- Render ---
@@ -383,10 +429,19 @@ function renderVerdict(data) {
   // Auto-narrate the verdict
   speakText(narration);
 
+  // Hide examples after first verdict
+  const examples = document.getElementById("exampleClaims");
+  if (examples) examples.classList.add("hidden");
+
   // Store full result for follow-ups
   lastResult = data;
   document.getElementById("followup").classList.remove("hidden");
   document.getElementById("followupAnswers").innerHTML = "";
+
+  // Generate suggested follow-up questions based on the claim and verdict
+  const claim = claimInput.value.trim();
+  const suggestions = generateFollowUps(claim, v, data.summary || "");
+  renderFollowUpSuggestions(suggestions);
 }
 
 const STANCE_BADGE = {
