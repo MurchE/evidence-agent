@@ -2,6 +2,10 @@
 
 body {
   -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(circle at 10% 5%, rgba(56, 189, 248, 0.11), transparent 35%),
+    radial-gradient(circle at 90% 15%, rgba(16, 185, 129, 0.08), transparent 32%),
+    #f8f9fa;
 }
 
 /* Mic button pulse when recording */
@@ -32,6 +36,98 @@ body {
   transform: translateY(-1px);
 }
 
+/* Demo examples carousel */
+.example-carousel {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding: 0.15rem 0.1rem 0.35rem;
+  scroll-snap-type: x mandatory;
+}
+
+.example-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+
+.example-carousel::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.example-claim-chip {
+  scroll-snap-align: start;
+  white-space: nowrap;
+  border: 1px solid #dbeafe;
+  background: linear-gradient(180deg, #eff6ff 0%, #e0edff 100%);
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.example-claim-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(30, 64, 175, 0.16);
+}
+
+.example-claim-chip.murky-chip {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  color: #b45309;
+}
+
+/* Loading treatment */
+.loading-shell {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(100%, 28rem);
+  padding: 0.8rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(4px);
+}
+
+.loading-gavel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  animation: gavel-tilt 1.2s ease-in-out infinite;
+}
+
+@keyframes gavel-tilt {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  30% { transform: rotate(-10deg) scale(1.03); }
+  70% { transform: rotate(8deg) scale(0.98); }
+}
+
+.loading-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #dbeafe;
+  overflow: hidden;
+}
+
+.loading-progress {
+  display: block;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #38bdf8, #2563eb);
+  animation: loading-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(280%); }
+}
+
 /* Speaker button pulse when playing */
 .speaker-btn.playing {
   animation: speaker-pulse 1s ease-in-out infinite;
@@ -46,6 +142,94 @@ body {
 /* Smooth verdict entrance */
 #verdict {
   animation: fadeSlideUp 0.4s ease-out;
+}
+
+#verdict.verdict-murky {
+  box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.08), 0 12px 30px rgba(217, 119, 6, 0.16);
+  background-image:
+    radial-gradient(circle at 50% -30%, rgba(251, 191, 36, 0.28), transparent 55%),
+    linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(254, 243, 199, 0.92));
+}
+
+.confidence-track {
+  width: 100%;
+  height: 0.7rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.28), rgba(245, 158, 11, 0.22), rgba(16, 185, 129, 0.28));
+}
+
+.confidence-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  transition: width 700ms ease;
+}
+
+.debate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.7rem;
+  border: 1px solid;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.debate-btn:hover {
+  transform: translateY(-1px);
+}
+
+.bull-case-btn {
+  border-color: #a7f3d0;
+  color: #047857;
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.bull-case-btn:hover {
+  box-shadow: 0 10px 24px rgba(5, 150, 105, 0.2);
+}
+
+.bear-case-btn {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.bear-case-btn:hover {
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.18);
+}
+
+.case-card {
+  border-radius: 0.8rem;
+  border: 1px solid;
+  padding: 0.9rem 1rem;
+}
+
+.case-card.case-bull {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+}
+
+.case-card.case-bear {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+@media (max-width: 640px) {
+  .loading-shell {
+    padding: 0.72rem 0.8rem;
+  }
+
+  .example-carousel {
+    gap: 0.45rem;
+  }
+
+  .example-claim-chip {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.72rem;
+  }
 }
 
 @keyframes fadeSlideUp {

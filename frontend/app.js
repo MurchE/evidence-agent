@@ -12,6 +12,22 @@ const confidenceNum = document.getElementById("confidenceNum");
 const verdictSummary = document.getElementById("verdictSummary");
 const sources = document.getElementById("sources");
 const sourceCards = document.getElementById("sourcePanelCards");
+const errorState = document.getElementById("errorState");
+const errorText = document.getElementById("errorText");
+const retryBtn = document.getElementById("retryBtn");
+const exampleCarousel = document.getElementById("exampleCarousel");
+
+const EXAMPLE_CLAIMS = [
+  { claim: "Drinking coffee reduces Alzheimer's risk", tone: "supported" },
+  { claim: "Exercise is more effective than antidepressants for mild depression", tone: "supported" },
+  { claim: "Vitamin C prevents the common cold", tone: "unsupported" },
+  { claim: "Blue light glasses significantly improve sleep quality", tone: "murky" },
+  { claim: "Red wine in moderation is good for your heart", tone: "murky" },
+];
+
+let retryLastAction = null;
+let isVerifying = false;
+const defaultVerifyBtnLabel = verifyBtn ? verifyBtn.textContent.trim() : "Verify Claim";
 let selectedVoice = "murch"; // default to Murch's cloned voice
 
 // --- Sidebar & Sources Panel ---
@@ -43,6 +59,65 @@ function closeAllPanels() {
   document.getElementById("sourcesPanel").classList.add("closed");
   document.getElementById("overlay").classList.add("hidden");
 }
+
+function setVerifyState(active) {
+  isVerifying = active;
+  verifyBtn.disabled = active;
+  verifyBtn.textContent = active ? "Verifying..." : defaultVerifyBtnLabel;
+  verifyBtn.classList.toggle("opacity-70", active);
+  verifyBtn.classList.toggle("cursor-not-allowed", active);
+}
+
+function dismissError() {
+  if (errorState) errorState.classList.add("hidden");
+  retryLastAction = null;
+}
+
+function showError(message, retryAction) {
+  if (!errorState || !errorText || !retryBtn) return;
+  errorText.textContent = message;
+  retryLastAction = typeof retryAction === "function" ? retryAction : null;
+  retryBtn.classList.toggle("hidden", !retryLastAction);
+  errorState.classList.remove("hidden");
+}
+
+if (retryBtn) {
+  retryBtn.addEventListener("click", () => {
+    if (!retryLastAction) return;
+    dismissError();
+    retryLastAction();
+  });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function renderExampleClaims() {
+  if (!exampleCarousel) return;
+  exampleCarousel.innerHTML = EXAMPLE_CLAIMS.map((entry) => {
+    const isMurky = entry.tone === "murky";
+    const extraClass = isMurky ? "murky-chip" : "";
+    return `<button class="example-claim-chip ${extraClass}" data-claim="${escapeHtml(entry.claim)}">${escapeHtml(entry.claim)}</button>`;
+  }).join("");
+
+  exampleCarousel.querySelectorAll("button[data-claim]").forEach((button) => {
+    button.addEventListener("click", () => pickExampleClaim(button.dataset.claim || ""));
+  });
+}
+
+function pickExampleClaim(claim) {
+  claimInput.value = claim;
+  verify();
+}
+
+renderExampleClaims();
 
 // Playback speed
 let playbackRate = 1.0;
@@ -114,7 +189,10 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
 }
 
 micBtn.addEventListener("mousedown", () => {
-  if (!recognition) return alert("Speech recognition not supported in this browser.");
+  if (!recognition) {
+    showError("Voice input isn’t supported in this browser. Try typing your claim instead.");
+    return;
+  }
   recognition.start();
   micBtn.classList.add("recording");
 });
@@ -123,42 +201,46 @@ micBtn.addEventListener("mouseup", () => {
   if (recognition) recognition.stop();
 });
 
-// --- Verify (SSE streaming) ---
-async function verify() {
-  const claim = claimInput.value.trim();
-  if (!claim) return;
-
-  // Reset UI
+function resetVerificationUI() {
   verdict.classList.add("hidden");
   sources.classList.add("hidden");
   sourceCards.innerHTML = "";
   document.getElementById("followup").classList.add("hidden");
   document.getElementById("followupAnswers").innerHTML = "";
   lastResult = null;
+}
+
+const AUDIO_CACHE = {
+  "Red wine in moderation is good for your heart": "cache/audio/redwine.mp3",
+};
+
+// --- Verify (SSE streaming) ---
+async function verify() {
+  const claim = claimInput.value.trim();
+  if (!claim || isVerifying) return;
+
+  dismissError();
+  setVerifyState(true);
+  resetVerificationUI();
   status.classList.remove("hidden");
   statusText.textContent = "Weighing the evidence...";
 
-  // Check demo cache first (instant results for pre-cached claims)
-  const AUDIO_CACHE = {
-    "Coffee prevents heart disease": "cache/audio/coffee.mp3",
-    "Red wine in moderation is good for your heart": "cache/audio/redwine.mp3",
-    "Keto can lower your cholesterol": "cache/audio/keto.mp3",
-  };
-
   if (DEMO_CACHE[claim]) {
-    // Brief delay to look natural (1-2s)
-    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
-    statusText.textContent = "Delivering verdict...";
-    await new Promise(r => setTimeout(r, 500));
+    await sleep(1000 + Math.random() * 600);
+    statusText.textContent = "Stress-testing the evidence quality...";
+    await sleep(500);
     status.classList.add("hidden");
+
     const data = DEMO_CACHE[claim];
     renderVerdict(data);
     renderSources(data.sources || []);
     saveToHistory(claim, data.verdict, data.confidence);
 
-    // Play pre-generated audio instead of hitting TTS API
     if (AUDIO_CACHE[claim]) {
-      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
       currentAudio = new Audio(AUDIO_CACHE[claim]);
       currentAudio.playbackRate = playbackRate;
       currentAudio.play();
@@ -170,6 +252,8 @@ async function verify() {
         currentAudio = null;
       });
     }
+
+    setVerifyState(false);
     return;
   }
 
@@ -195,7 +279,7 @@ async function verify() {
 
     evtSource.addEventListener("source_classified", (e) => {
       const data = JSON.parse(e.data);
-      statusText.textContent = `Classified ${data.index}/${data.total}: ${data.title.slice(0, 40)}...`;
+      statusText.textContent = `Classified ${data.index}/${data.total}: ${data.title.slice(0, 45)}...`;
     });
 
     evtSource.addEventListener("result", (e) => {
@@ -205,24 +289,29 @@ async function verify() {
       renderVerdict(data);
       renderSources(data.sources || []);
       saveToHistory(claim, data.verdict, data.confidence);
+      setVerifyState(false);
     });
 
     evtSource.onerror = () => {
       evtSource.close();
       status.classList.add("hidden");
-      // Fallback to non-streaming endpoint
       verifyFallback(claim);
     };
   } catch (err) {
     status.classList.add("hidden");
-    alert("Error: " + err.message);
+    setVerifyState(false);
+    showError(
+      "JudiciAI couldn’t reach the verification service. Check your backend and try again.",
+      () => verify()
+    );
+    console.error(err);
   }
 }
 
 // Fallback for browsers/environments where SSE doesn't work
 async function verifyFallback(claim) {
   status.classList.remove("hidden");
-  statusText.textContent = "Analyzing claim...";
+  statusText.textContent = "Finalizing your verdict...";
 
   try {
     const resp = await fetch(`${API_URL}/verify`, {
@@ -240,13 +329,35 @@ async function verifyFallback(claim) {
     saveToHistory(claim, data.verdict, data.confidence);
   } catch (err) {
     status.classList.add("hidden");
-    alert("Error: " + err.message);
+    showError(
+      "We hit a network issue before the verdict could load. Tap retry to run it again.",
+      () => {
+        claimInput.value = claim;
+        verify();
+      }
+    );
+    console.error(err);
+  } finally {
+    setVerifyState(false);
   }
 }
 
 verifyBtn.addEventListener("click", verify);
 claimInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") verify();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    verify();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.key !== "Enter") return;
+  e.preventDefault();
+  if (document.activeElement?.id === "followupInput") {
+    askFollowup();
+    return;
+  }
+  verify();
 });
 
 // --- Voice Output (ElevenLabs TTS) ---
@@ -330,28 +441,64 @@ async function speakText(text) {
 // --- Last result (for follow-ups) ---
 let lastResult = null;
 
-// --- Copy verdict ---
-function copyVerdict() {
+function buildShareSummary() {
   const claim = document.getElementById("verdictClaim").textContent;
   const v = verdictLabel.textContent;
   const conf = confidenceNum.textContent;
   const summary = verdictSummary.textContent;
-  const text = `Claim: ${claim}\nVerdict: ${v} (${conf})\n${summary}\n\n— Evidence Agent`;
 
-  navigator.clipboard.writeText(text).then(() => {
+  const compact = `JudiciAI verdict\nClaim: "${claim}"\nRuling: ${v} (${conf})\n${summary}\n\nVerified with Firecrawl + Claude + ElevenLabs`;
+  const social = `JudiciAI checked: "${claim}"\n→ ${v} (${conf} confidence)\n${summary}`;
+
+  return { claim, v, conf, summary, compact, social };
+}
+
+// --- Copy verdict ---
+function copyVerdict() {
+  const { compact } = buildShareSummary();
+  navigator.clipboard.writeText(compact).then(() => {
     const btn = document.getElementById("shareBtnText");
     btn.textContent = "Copied!";
-    setTimeout(() => { btn.textContent = "Copy verdict"; }, 2000);
+    setTimeout(() => { btn.textContent = "Copy"; }, 2000);
   });
+}
+
+async function shareVerdict() {
+  const { compact } = buildShareSummary();
+  const btn = document.getElementById("shareVerdictBtnText");
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "JudiciAI Verdict",
+        text: compact,
+      });
+      if (btn) btn.textContent = "Shared";
+    } else {
+      await navigator.clipboard.writeText(compact);
+      if (btn) btn.textContent = "Copied for share";
+    }
+  } catch (err) {
+    if (err?.name !== "AbortError") {
+      showError("Couldn’t open sharing options. You can still use Copy verdict.");
+    }
+  }
+
+  if (btn) {
+    setTimeout(() => {
+      btn.textContent = "Share Verdict";
+    }, 1800);
+  }
 }
 
 // --- Pre-cached demo results (instant for demo) ---
 const DEMO_CACHE = {};
 async function loadDemoCache() {
   const demos = [
-    { claim: "Coffee prevents heart disease", file: "cache/coffee.json" },
+    { claim: "Drinking coffee reduces Alzheimer's risk", file: "cache/coffee-alzheimers.json" },
+    { claim: "Exercise is more effective than antidepressants for mild depression", file: "cache/exercise-depression.json" },
+    { claim: "Vitamin C prevents the common cold", file: "cache/vitamin-c-cold.json" },
+    { claim: "Blue light glasses significantly improve sleep quality", file: "cache/blue-light-sleep.json" },
     { claim: "Red wine in moderation is good for your heart", file: "cache/redwine.json" },
-    { claim: "Keto can lower your cholesterol", file: "cache/keto.json" },
   ];
   for (const d of demos) {
     try {
@@ -364,11 +511,7 @@ loadDemoCache();
 
 // --- Share functions ---
 function getVerdictText() {
-  const claim = document.getElementById("verdictClaim").textContent;
-  const v = verdictLabel.textContent;
-  const conf = confidenceNum.textContent;
-  const summary = verdictSummary.textContent;
-  return { claim, v, conf, summary };
+  return buildShareSummary();
 }
 
 function shareToX() {
@@ -391,6 +534,7 @@ function shareToEmail() {
 }
 
 function newClaim() {
+  dismissError();
   claimInput.value = "";
   verdict.classList.add("hidden");
   sources.classList.add("hidden");
@@ -409,7 +553,23 @@ function newClaim() {
 // --- Bull & Bear (steelman / steelman-against) ---
 // Pre-cached bull/bear for demo claims
 const BULL_BEAR_CACHE = {};
+const BULL_BEAR_PRESET = {
+  "bull:Drinking coffee reduces Alzheimer's risk": {
+    answer: "The strongest pro case is that several large prospective cohorts and umbrella reviews report lower incidence of cognitive decline among moderate coffee drinkers, with effect sizes in the ~20-30% range for Alzheimer’s and all-cause dementia. Mechanistically, caffeine and polyphenols are plausible via anti-inflammatory and cerebrovascular pathways, and the signal appears fairly consistent across populations after adjusting for age and smoking."
+  },
+  "bear:Drinking coffee reduces Alzheimer's risk": {
+    answer: "The strongest anti case is that this is mostly observational evidence, not randomized long-term prevention trials. Reverse causality and lifestyle confounding remain difficult to fully remove, and dose-response thresholds vary across studies. The data suggests association, but not definitive proof that coffee itself causes lower Alzheimer’s risk."
+  },
+  "bull:Exercise is more effective than antidepressants for mild depression": {
+    answer: "The strongest FOR argument is that many meta-analyses show exercise has moderate-to-large symptom improvements for mild depression, while also improving sleep, anxiety, cardiometabolic health, and relapse prevention. For mild cases, adherence-supported exercise programs can match or exceed medication effect sizes without medication side effects."
+  },
+  "bear:Exercise is more effective than antidepressants for mild depression": {
+    answer: "The strongest AGAINST argument is that treatment response is highly individual and depends on intensity, supervision, and adherence. Antidepressants can outperform exercise for some patients, especially when symptoms escalate or comorbid anxiety dominates. Best evidence often supports exercise as first-line adjunctive care, not a universal replacement."
+  },
+};
+
 async function loadBullBearCache() {
+  Object.assign(BULL_BEAR_CACHE, BULL_BEAR_PRESET);
   try {
     const bullResp = await fetch("cache/redwine-bull.json");
     if (bullResp.ok) BULL_BEAR_CACHE["bull:Red wine in moderation is good for your heart"] = await bullResp.json();
@@ -419,32 +579,39 @@ async function loadBullBearCache() {
 }
 loadBullBearCache();
 
+function renderCaseCard(type, text) {
+  const answers = document.getElementById("followupAnswers");
+  const isBull = type === "bull";
+  const title = isBull ? "Bull Case" : "Bear Case";
+  const icon = isBull ? "🐂" : "🐻";
+  const textColor = isBull ? "text-emerald-700" : "text-red-700";
+  answers.innerHTML += `<div class="case-card ${isBull ? "case-bull" : "case-bear"}"><p class="text-xs ${textColor} font-semibold mb-1">${icon} ${title}</p><p class="text-sm text-gray-700">${escapeHtml(text)}</p></div>`;
+}
+
 function askBullCase() {
   const claim = claimInput.value.trim();
   const cached = BULL_BEAR_CACHE["bull:" + claim];
   if (cached) {
-    const answers = document.getElementById("followupAnswers");
-    answers.innerHTML += '<div class="text-sm bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3"><p class="text-xs text-emerald-600 font-semibold mb-1">🐂 Bull Case</p><p class="text-gray-700">' + cached.answer + '</p></div>';
+    renderCaseCard("bull", cached.answer);
     speakText(cached.answer);
     return;
   }
   const input = document.getElementById("followupInput");
   input.value = "What is the strongest evidence supporting this claim? Steel-man the case FOR it.";
-  askFollowup();
+  askFollowup("bull");
 }
 
 function askBearCase() {
   const claim = claimInput.value.trim();
   const cached = BULL_BEAR_CACHE["bear:" + claim];
   if (cached) {
-    const answers = document.getElementById("followupAnswers");
-    answers.innerHTML += '<div class="text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3"><p class="text-xs text-red-600 font-semibold mb-1">🐻 Bear Case</p><p class="text-gray-700">' + cached.answer + '</p></div>';
+    renderCaseCard("bear", cached.answer);
     speakText(cached.answer);
     return;
   }
   const input = document.getElementById("followupInput");
   input.value = "What is the strongest evidence against this claim? Steel-man the case AGAINST it.";
-  askFollowup();
+  askFollowup("bear");
 }
 
 // --- Follow-up suggestions ---
@@ -491,25 +658,44 @@ function renderFollowUpSuggestions(suggestions) {
 
 // --- Render ---
 const VERDICT_STYLES = {
-  SUPPORTED:   { bg: "bg-emerald-50", border: "border-emerald-500", barBg: "bg-emerald-500", text: "text-emerald-700" },
-  UNSUPPORTED: { bg: "bg-red-50",     border: "border-red-500",     barBg: "bg-red-500",     text: "text-red-700" },
-  MURKY:       { bg: "bg-amber-50",   border: "border-amber-500",   barBg: "bg-amber-500",   text: "text-amber-700" },
+  SUPPORTED: {
+    bg: "bg-emerald-50",
+    border: "border-emerald-500",
+    barBg: "bg-emerald-500",
+    text: "text-emerald-700",
+    verdictClass: "",
+  },
+  UNSUPPORTED: {
+    bg: "bg-red-50",
+    border: "border-red-500",
+    barBg: "bg-red-500",
+    text: "text-red-700",
+    verdictClass: "",
+  },
+  MURKY: {
+    bg: "bg-amber-50",
+    border: "border-amber-400 border-dashed",
+    barBg: "bg-amber-500",
+    text: "text-amber-800",
+    verdictClass: "verdict-murky",
+  },
 };
 
 function renderVerdict(data) {
   const v = data.verdict || "MURKY";
   const style = VERDICT_STYLES[v] || VERDICT_STYLES.MURKY;
+  dismissError();
 
   // Show the original claim in the verdict banner
   document.getElementById("verdictClaim").textContent = claimInput.value.trim();
 
-  verdict.className = `mb-8 rounded-2xl p-6 text-center border ${style.bg} ${style.border}`;
+  verdict.className = `mb-8 rounded-2xl p-6 text-center border ${style.bg} ${style.border} ${style.verdictClass || ""}`;
   verdictLabel.textContent = v;
   verdictLabel.className = `text-3xl font-extrabold mb-2 ${style.text}`;
 
   const conf = data.confidence || 0;
   confidenceBar.style.width = `${conf * 10}%`;
-  confidenceBar.className = `h-full rounded-full transition-all duration-700 ${style.barBg}`;
+  confidenceBar.className = `confidence-fill ${style.barBg}`;
   confidenceNum.textContent = `${conf}/10`;
 
   verdictSummary.textContent = data.summary || "";
@@ -549,11 +735,18 @@ function renderSources(srcs) {
   if (sourceCount) sourceCount.textContent = srcs.length + " sources found — click to view details →";
 
   const cardHtml = srcs.map((s) => {
-    const domain = new URL(s.url).hostname.replace("www.", "");
+    const safeUrl = s.url || "";
+    let domain = "source";
+    try {
+      domain = new URL(safeUrl).hostname.replace("www.", "") || "source";
+    } catch {
+      domain = "source";
+    }
     const badge = STANCE_BADGE[s.stance] || STANCE_BADGE.NEUTRAL;
     const cred = s.credibility || 5;
     const credColor = cred >= 7 ? "text-emerald-600" : cred >= 4 ? "text-amber-600" : "text-red-600";
     const credBarColor = cred >= 7 ? "bg-emerald-500" : cred >= 4 ? "bg-amber-500" : "bg-red-500";
+    const sourceLink = safeUrl ? `<a href="${safeUrl}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">View source &rarr;</a>` : "";
     return `
       <div class="source-card bg-panel border border-border rounded-xl p-4">
         <div class="flex items-center justify-between mb-2">
@@ -571,7 +764,7 @@ function renderSources(srcs) {
           <span class="text-xs font-semibold ${credColor}">${cred}/10</span>
         </div>
         ${s.quote ? '<blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-gray-500 italic mt-2">"' + s.quote + '"</blockquote>' : ""}
-        <a href="${s.url}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">View source &rarr;</a>
+        ${sourceLink}
       </div>`;
   }).join("");
 
@@ -628,18 +821,27 @@ function renderHistory() {
 renderHistory();
 
 // --- Follow-up Q&A ---
-async function askFollowup() {
+async function askFollowup(caseMode = null) {
   const input = document.getElementById("followupInput");
   const question = input.value.trim();
   if (!question || !lastResult) return;
+  dismissError();
 
   const answers = document.getElementById("followupAnswers");
+  const loadingId = `followupLoading-${Date.now()}`;
+  const promptLabel = caseMode === "bull" ? "🐂 Bull Case Prompt" : caseMode === "bear" ? "🐻 Bear Case Prompt" : "You asked";
+  const promptClass = caseMode === "bull"
+    ? "case-card case-bull"
+    : caseMode === "bear"
+      ? "case-card case-bear"
+      : "text-sm bg-panel border border-border rounded-lg px-4 py-3";
+
   // Show question immediately
   answers.innerHTML += `
-    <div class="text-sm text-gray-300 bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3">
-      <p class="text-xs text-blue-400 font-semibold mb-1">You asked:</p>
-      <p>${question}</p>
-      <p class="text-gray-500 mt-2 italic" id="followupLoading">Thinking...</p>
+    <div class="${promptClass}">
+      <p class="text-xs text-blue-600 font-semibold mb-1">${promptLabel}:</p>
+      <p class="text-sm text-gray-700">${escapeHtml(question)}</p>
+      <p class="text-gray-500 mt-2 italic" id="${loadingId}">Reviewing evidence...</p>
     </div>`;
   input.value = "";
 
@@ -659,14 +861,18 @@ async function askFollowup() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
 
-    const loading = document.getElementById("followupLoading");
-    if (loading) loading.outerHTML = `<p class="mt-2">${data.answer}</p>`;
+    const loading = document.getElementById(loadingId);
+    if (loading) loading.outerHTML = `<p class="mt-2 text-sm text-gray-700">${escapeHtml(data.answer)}</p>`;
 
     // Narrate the answer
     speakText(data.answer);
   } catch (err) {
-    const loading = document.getElementById("followupLoading");
-    if (loading) loading.textContent = "Failed to get answer: " + err.message;
+    const loading = document.getElementById(loadingId);
+    if (loading) loading.textContent = "Couldn’t load the follow-up answer right now.";
+    showError("Follow-up request failed. Tap retry to ask again.", () => {
+      input.value = question;
+      askFollowup(caseMode);
+    });
   }
 }
 

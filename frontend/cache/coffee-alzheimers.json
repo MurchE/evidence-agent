@@ -1,0 +1,52 @@
+{
+  "verdict": "SUPPORTED",
+  "confidence": 8,
+  "summary": "The evidence supports that regular moderate coffee intake is associated with lower risk of Alzheimer's disease and all-cause dementia. Multiple large cohort studies and umbrella reviews report protective associations, and biological mechanisms involving caffeine and polyphenols are plausible. The caveat is that most evidence is observational rather than randomized prevention trials.",
+  "sources": [
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/20182054/",
+      "title": "Midlife coffee and tea drinking and the risk of late-life dementia",
+      "quote": "Coffee drinkers at midlife had lower risk of dementia and Alzheimer disease at follow-up than low coffee consumers.",
+      "stance": "FOR",
+      "relevance": 10,
+      "credibility": 9,
+      "credibility_reason": "Peer-reviewed prospective cohort with long follow-up and clinically meaningful endpoint."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25805059/",
+      "title": "Coffee, tea, and caffeine consumption and risk of dementia",
+      "quote": "Higher habitual caffeine intake was associated with lower cognitive decline in older women.",
+      "stance": "FOR",
+      "relevance": 9,
+      "credibility": 8,
+      "credibility_reason": "Large longitudinal cohort published in a high-quality journal with robust adjustment."
+    },
+    {
+      "url": "https://www.nature.com/articles/s41598-022-16072-0",
+      "title": "Coffee and neurodegeneration biomarkers",
+      "quote": "Moderate coffee consumption was associated with favorable trajectories across several cognitive biomarkers.",
+      "stance": "FOR",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed biomarker-focused study with transparent statistical analysis."
+    },
+    {
+      "url": "https://www.alzheimers.org.uk/blog/can-coffee-help-prevent-dementia",
+      "title": "Can coffee help prevent dementia?",
+      "quote": "Current evidence suggests a potential association, but we still cannot conclude coffee directly prevents dementia.",
+      "stance": "NEUTRAL",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Respected disease-focused nonprofit with evidence-based summaries and cautious interpretation."
+    },
+    {
+      "url": "https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/1105943",
+      "title": "Caffeine intake and cognitive decline in women",
+      "quote": "Higher long-term caffeine intake was associated with slower rates of cognitive decline.",
+      "stance": "FOR",
+      "relevance": 8,
+      "credibility": 9,
+      "credibility_reason": "Published in a top-tier medical journal with strong cohort methodology."
+    }
+  ]
+}

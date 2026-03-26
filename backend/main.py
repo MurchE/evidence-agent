@@ -52,7 +52,7 @@ class FollowUpRequest(BaseModel):
     sources: list[dict]
 
 
-MOCK_RESULT = {
+DEFAULT_MOCK_RESULT = {
     "verdict": "SUPPORTED",
     "confidence": 7,
     "summary": "Multiple peer-reviewed studies indicate moderate coffee consumption (3-4 cups/day) is associated with reduced cardiovascular risk. However, effects vary by individual genetics and preparation method.",
@@ -96,6 +96,85 @@ MOCK_RESULT = {
     ],
 }
 
+MOCK_RESULTS_BY_CLAIM = {
+    "drinking coffee reduces alzheimer's risk": {
+        "verdict": "SUPPORTED",
+        "confidence": 8,
+        "summary": "The evidence supports that regular moderate coffee intake is associated with lower Alzheimer's and dementia risk. Multiple cohort studies and review-level syntheses report protective associations, and plausible biological pathways exist. Most evidence is observational, so this is a strong association rather than a definitive causal prevention claim.",
+        "sources": [
+            {
+                "url": "https://pubmed.ncbi.nlm.nih.gov/20182054/",
+                "title": "Midlife coffee and tea drinking and late-life dementia",
+                "quote": "Coffee drinkers at midlife had lower risk of dementia and Alzheimer disease at follow-up.",
+                "stance": "FOR",
+                "relevance": 10,
+                "credibility": 9,
+                "credibility_reason": "Peer-reviewed longitudinal cohort with clinically relevant endpoint.",
+            },
+            {
+                "url": "https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/1105943",
+                "title": "Caffeine intake and cognitive decline",
+                "quote": "Higher long-term caffeine intake was associated with slower cognitive decline.",
+                "stance": "FOR",
+                "relevance": 9,
+                "credibility": 9,
+                "credibility_reason": "Major medical journal publication with robust cohort analysis.",
+            },
+            {
+                "url": "https://www.alzheimers.org.uk/blog/can-coffee-help-prevent-dementia",
+                "title": "Can coffee help prevent dementia?",
+                "quote": "Current evidence suggests a potential association, but we still cannot conclude coffee directly prevents dementia.",
+                "stance": "NEUTRAL",
+                "relevance": 8,
+                "credibility": 8,
+                "credibility_reason": "Evidence-focused nonprofit summary with balanced caveats.",
+            },
+        ],
+    },
+    "exercise is more effective than antidepressants for mild depression": {
+        "verdict": "SUPPORTED",
+        "confidence": 7,
+        "summary": "The evidence supports that structured exercise can match or outperform antidepressants for many patients with mild depression. Meta-analyses report meaningful symptom improvements, especially when exercise is supervised and sustained. Outcomes still vary by adherence and individual response, so medication remains important in some cases.",
+        "sources": [
+            {
+                "url": "https://www.bmj.com/content/384/bmj-2023-075847",
+                "title": "Effect of exercise for depression: umbrella review",
+                "quote": "Exercise showed moderate effects on depression symptoms across a wide range of populations and modalities.",
+                "stance": "FOR",
+                "relevance": 10,
+                "credibility": 9,
+                "credibility_reason": "High-quality umbrella review in a major peer-reviewed journal.",
+            },
+            {
+                "url": "https://www.nice.org.uk/guidance/ng222",
+                "title": "NICE guideline: Depression in adults",
+                "quote": "Guidelines recommend considering exercise and behavioural activation as core options for less severe depression.",
+                "stance": "FOR",
+                "relevance": 8,
+                "credibility": 9,
+                "credibility_reason": "National evidence-based clinical guideline from a trusted standards body.",
+            },
+            {
+                "url": "https://www.psychiatry.org/patients-families/depression/what-is-depression",
+                "title": "APA overview of depression treatment",
+                "quote": "Lifestyle interventions can help, but antidepressants remain effective and necessary for many individuals depending on severity and response.",
+                "stance": "NEUTRAL",
+                "relevance": 8,
+                "credibility": 8,
+                "credibility_reason": "Authoritative psychiatric guidance with balanced interpretation.",
+            },
+        ],
+    },
+}
+
+
+def _normalize_claim(claim: str) -> str:
+    return " ".join(claim.lower().split())
+
+
+def _get_mock_result(claim: str) -> dict:
+    return MOCK_RESULTS_BY_CLAIM.get(_normalize_claim(claim), DEFAULT_MOCK_RESULT)
+
 
 @app.post("/verify")
 async def verify_claim(req: ClaimRequest):
@@ -103,7 +182,7 @@ async def verify_claim(req: ClaimRequest):
         raise HTTPException(status_code=400, detail="Claim cannot be empty")
 
     if MOCK_MODE:
-        return MOCK_RESULT
+        return _get_mock_result(req.claim)
 
     agent = EvidenceAgent()
     result = await agent.verify(req.claim.strip())
@@ -137,6 +216,8 @@ async def _mock_stream(claim: str):
     """Simulate the SSE stream with mock data and realistic delays."""
     import asyncio
 
+    mock_result = _get_mock_result(claim)
+
     def _sse(event: str, data: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
@@ -148,21 +229,21 @@ async def _mock_stream(claim: str):
 
     yield _sse("step", {"step": "search", "message": "Searching 3 queries via Firecrawl..."})
     await asyncio.sleep(1.2)
-    yield _sse("search_done", {"count": len(MOCK_RESULT["sources"])})
+    yield _sse("search_done", {"count": len(mock_result["sources"])})
 
-    yield _sse("step", {"step": "classify", "message": f"Classifying {len(MOCK_RESULT['sources'])} sources..."})
-    for i, src in enumerate(MOCK_RESULT["sources"]):
+    yield _sse("step", {"step": "classify", "message": f"Classifying {len(mock_result['sources'])} sources..."})
+    for i, src in enumerate(mock_result["sources"]):
         await asyncio.sleep(0.6)
         yield _sse("source_classified", {
             "index": i + 1,
-            "total": len(MOCK_RESULT["sources"]),
+            "total": len(mock_result["sources"]),
             "title": src["title"],
             "stance": src["stance"],
         })
 
     yield _sse("step", {"step": "synthesize", "message": "Synthesizing final verdict..."})
     await asyncio.sleep(1.0)
-    yield _sse("result", MOCK_RESULT)
+    yield _sse("result", mock_result)
 
 
 @app.get("/verify/stream")
@@ -192,7 +273,17 @@ async def followup(req: FollowUpRequest):
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
     if MOCK_MODE:
-        return {"answer": "Based on the evidence reviewed, the studies primarily examined filtered coffee. Unfiltered methods like French press may have different cardiovascular effects due to cafestol and kahweol compounds that can raise LDL cholesterol."}
+        normalized_claim = _normalize_claim(req.claim)
+        q = req.question.lower()
+        if "coffee" in normalized_claim and "against" in q:
+            return {"answer": "The strongest challenge is that most positive findings are observational rather than randomized prevention trials, so causality is not fully proven. Residual confounding from lifestyle factors and socioeconomic differences can still influence the association. In other words, coffee may be a marker of a healthier profile in some cohorts rather than the sole causal factor."}
+        if "coffee" in normalized_claim:
+            return {"answer": "The strongest supportive thread is consistency across multiple long-term cohort datasets: moderate coffee users repeatedly show lower dementia and Alzheimer incidence. The signal is biologically plausible through caffeine, antioxidant polyphenols, and vascular effects, though experts still frame this as a strong association rather than definitive proof of prevention."}
+        if "exercise" in normalized_claim and "against" in q:
+            return {"answer": "A fair counterpoint is that exercise response depends heavily on adherence, intensity, and supervision, and some patients improve faster with medication. Effect sizes vary across studies, and severe or complex depression often requires pharmacologic and psychotherapeutic support. So exercise is powerful, but not a universal replacement."}
+        if "exercise" in normalized_claim:
+            return {"answer": "The best argument in favor is that supervised exercise programs often produce antidepressant-scale symptom improvements in mild depression while also improving sleep, anxiety, and physical health. This gives exercise a broader risk-benefit profile for many mild cases. Most experts still position it as first-line or adjunctive care depending on individual context."}
+        return {"answer": "In mock mode, JudiciAI can answer focused follow-ups about evidence quality, strongest supporting arguments, and strongest counterarguments. Ask for the bull or bear case to see a stronger demo response."}
 
     sources_text = "\n".join(
         f"- [{s.get('stance', 'NEUTRAL')}] {s.get('title', '')}: \"{s.get('quote', '')}\" "

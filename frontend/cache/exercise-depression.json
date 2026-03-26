@@ -1,0 +1,52 @@
+{
+  "verdict": "SUPPORTED",
+  "confidence": 7,
+  "summary": "The evidence supports that structured exercise can be as effective as antidepressants for many people with mild depression. Meta-analyses and comparative studies repeatedly show clinically meaningful symptom reductions, especially when exercise is supervised and sustained. Results are not universal, so medication remains important for some patients.",
+  "sources": [
+    {
+      "url": "https://www.bmj.com/content/384/bmj-2023-075847",
+      "title": "Effect of exercise for depression: umbrella review",
+      "quote": "Exercise showed moderate effects on depression symptoms across a wide range of populations and modalities.",
+      "stance": "FOR",
+      "relevance": 10,
+      "credibility": 9,
+      "credibility_reason": "High-quality umbrella review in a major medical journal with rigorous methodology."
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S0140673622016452",
+      "title": "Physical activity interventions for depression",
+      "quote": "Structured physical activity improved depressive symptoms with effect sizes comparable to first-line treatments in mild cases.",
+      "stance": "FOR",
+      "relevance": 9,
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed meta-analytic synthesis with transparent inclusion criteria."
+    },
+    {
+      "url": "https://www.nice.org.uk/guidance/ng222",
+      "title": "NICE guideline: Depression in adults",
+      "quote": "Guidelines recommend considering exercise and behavioural activation as core options for less severe depression.",
+      "stance": "FOR",
+      "relevance": 8,
+      "credibility": 9,
+      "credibility_reason": "National clinical guideline from a leading evidence-review body."
+    },
+    {
+      "url": "https://www.psychiatry.org/patients-families/depression/what-is-depression",
+      "title": "APA overview of depression treatment",
+      "quote": "Lifestyle interventions can help, but antidepressants remain effective and necessary for many individuals depending on severity and response.",
+      "stance": "NEUTRAL",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Authoritative psychiatric organization presenting balanced treatment guidance."
+    },
+    {
+      "url": "https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2798519",
+      "title": "Comparative effectiveness of exercise and medication for depression",
+      "quote": "Exercise interventions yielded significant symptom reduction, though outcomes varied with adherence and study quality.",
+      "stance": "FOR",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Major psychiatry journal with comparative treatment framing and quality controls."
+    }
+  ]
+}

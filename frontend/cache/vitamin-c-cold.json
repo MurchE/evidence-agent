@@ -1,0 +1,52 @@
+{
+  "verdict": "UNSUPPORTED",
+  "confidence": 8,
+  "summary": "The evidence does not support that vitamin C prevents the common cold for the general population. Large Cochrane reviews consistently find little to no reduction in cold incidence in everyday use. Vitamin C may modestly shorten duration and has clearer preventive effects only in specific high-physical-stress groups.",
+  "sources": [
+    {
+      "url": "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD000980.pub4/full",
+      "title": "Vitamin C for preventing and treating the common cold",
+      "quote": "Regular supplementation had no effect on common cold incidence in the ordinary community.",
+      "stance": "AGAINST",
+      "relevance": 10,
+      "credibility": 10,
+      "credibility_reason": "Cochrane systematic review with high methodological rigor and broad evidence base."
+    },
+    {
+      "url": "https://ods.od.nih.gov/factsheets/VitaminC-HealthProfessional/",
+      "title": "NIH Office of Dietary Supplements: Vitamin C",
+      "quote": "Routine vitamin C supplementation does not reduce the risk of developing colds in most people.",
+      "stance": "AGAINST",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Official U.S. government health resource synthesizing high-quality evidence."
+    },
+    {
+      "url": "https://www.mayoclinic.org/drugs-supplements-vitamin-c/art-20363932",
+      "title": "Mayo Clinic: Vitamin C",
+      "quote": "For most people, vitamin C supplements don't prevent colds, though they may slightly shorten duration.",
+      "stance": "AGAINST",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Trusted clinical institution with evidence-aligned patient guidance."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/23440782/",
+      "title": "Vitamin C and infections under physical stress",
+      "quote": "In marathon runners, skiers, and soldiers in subarctic conditions, incidence was reduced by half.",
+      "stance": "FOR",
+      "relevance": 7,
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed evidence with clear subgroup effects but limited generalizability."
+    },
+    {
+      "url": "https://www.cdc.gov/nutrition/micronutrient-malnutrition/micronutrients/vitamin-c.html",
+      "title": "CDC: Vitamin C overview",
+      "quote": "Vitamin C is essential for immune function, but supplementation has limited preventive effect on common cold incidence.",
+      "stance": "AGAINST",
+      "relevance": 7,
+      "credibility": 8,
+      "credibility_reason": "Government public-health source consistent with major review findings."
+    }
+  ]
+}

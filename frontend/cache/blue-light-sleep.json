@@ -1,0 +1,52 @@
+{
+  "verdict": "MURKY",
+  "confidence": 4,
+  "summary": "The evidence is inconclusive on whether blue light glasses significantly improve sleep quality for most users. Some controlled studies report modest benefits in sleep onset and self-reported quality, while others show minimal objective differences versus placebo lenses. Effects appear highly context-dependent based on evening screen exposure, lens quality, and baseline sleep habits.",
+  "sources": [
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/29044670/",
+      "title": "Blue-blocking glasses as a treatment for insomnia",
+      "quote": "Participants in the amber-lens condition reported improved sleep and mood compared with clear-lens controls.",
+      "stance": "FOR",
+      "relevance": 9,
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed randomized crossover design with direct sleep-related outcomes."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/32007978/",
+      "title": "Do blue-blocking lenses improve sleep? A systematic review",
+      "quote": "Evidence was mixed and generally low-certainty due to heterogeneity and small sample sizes.",
+      "stance": "NEUTRAL",
+      "relevance": 10,
+      "credibility": 9,
+      "credibility_reason": "Systematic review explicitly grading evidence quality and limitations."
+    },
+    {
+      "url": "https://www.aao.org/eye-health/tips-prevention/are-computer-glasses-worth-it",
+      "title": "American Academy of Ophthalmology guidance",
+      "quote": "There is not enough evidence to support special blue-blocking eyewear for digital eye strain or sleep in all users.",
+      "stance": "AGAINST",
+      "relevance": 8,
+      "credibility": 9,
+      "credibility_reason": "Leading professional medical association with conservative evidence standards."
+    },
+    {
+      "url": "https://www.nature.com/articles/s41598-021-89241-3",
+      "title": "Blue-blocking lenses and evening melatonin outcomes",
+      "quote": "Blue-blocking interventions altered melatonin profiles, but downstream sleep metrics varied considerably across participants.",
+      "stance": "NEUTRAL",
+      "relevance": 8,
+      "credibility": 8,
+      "credibility_reason": "Peer-reviewed trial with objective biomarker measurement and transparent caveats."
+    },
+    {
+      "url": "https://www.sleepfoundation.org/sleep-news/do-blue-light-blocking-glasses-really-work",
+      "title": "Sleep Foundation evidence summary",
+      "quote": "Some people may benefit, but more high-quality studies are needed before strong conclusions can be made.",
+      "stance": "NEUTRAL",
+      "relevance": 7,
+      "credibility": 7,
+      "credibility_reason": "Evidence review source summarizing peer-reviewed findings with balanced framing."
+    }
+  ]
+}
