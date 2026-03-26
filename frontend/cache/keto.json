@@ -1,1 +1,52 @@
-{"verdict":"MURKY","confidence":5,"summary":"The evidence is inconclusive on whether keto can lower cholesterol, as the research shows contradictory effects depending on individual metabolic factors and time frame. While some sources report improvements in certain lipid markers (lower triglycerides, higher HDL) and potential LDL reduction in specific populations, others document significant LDL elevation particularly in lean, metabolically healthy individuals, and note that long-term efficacy is questionable. The divergent outcomes suggest keto's cholesterol impact is highly individualized rather than universally beneficial or harmful.","sources":[{"url":"https://www.jacc.org/doi/10.1016/j.jacadv.2024.101109","title":"Carbohydrate Restriction-Induced Elevations in LDL-Cholesterol ...","quote":"Increases in low-density lipoprotein cholesterol (LDL-C) can occur on carbohydrate restricted ketogenic diets. Lean metabolically healthy individuals with a low triglyceride-to-high-density lipoprotein cholesterol ratio appear particularly susceptible, giving rise to the novel 'lean mass hyper-responder' (LMHR) phenotype.","stance":"AGAINST","relevance":10,"credibility":9,"credibility_reason":"Published in JACC (Journal of the American College of Cardiology), a peer-reviewed, high-impact medical journal; presents original research with clinical data, imaging studies, and matched cohort analysis."},{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC7449640/","title":"Significant Impact of the Ketogenic Diet on Low-Density Lipoprotein ...","quote":"Significant Impact of the Ketogenic Diet on Low-Density Lipoprotein Cholesterol Levels","stance":"FOR","relevance":9,"credibility":9,"credibility_reason":"Published in peer-reviewed medical journal indexed in PubMed Central (NIH/NLM), with named authors from accredited medical institutions and .gov domain hosting."},{"url":"https://www.sciencedirect.com/science/article/pii/S0146280624000410","title":"Ketogenic diet and cardiovascular risk – state of the art review","quote":"The ketogenic diet presents the potential for rapid short-term reduction of body mass, triglycerides level, Hb1Ac, and blood pressure. Its efficacy for weight loss and the above-mentioned metabolic changes is not significant in long-term observations.","stance":"NEUTRAL","relevance":9,"credibility":9,"credibility_reason":"Published in peer-reviewed journal (Current Problems in Cardiology) by Elsevier with DOI, authored by MD PhD researcher, and presents evidence-based state-of-the-art review with rigorous methodology."},{"url":"https://www.health.harvard.edu/heart-health/keto-diet-is-not-healthy-and-may-harm-the-heart","title":"Keto diet is not healthy and may harm the heart - Harvard Health","quote":"Keto diet is not healthy and may harm the heart","stance":"AGAINST","relevance":9,"credibility":9,"credibility_reason":"Harvard Health is a highly authoritative medical institution with peer-reviewed editorial oversight from Harvard Medical School faculty, lending strong credibility to health claims."},{"url":"https://med.stanford.edu/news/insights/2019/01/higher-percentages-of-saturated-fat-in-low-carb-diets-may-not-harm-cholesterol-levels-new-analysis-suggests.html","title":"Higher percentages of saturated fat in low-carb diets may not harm ...","quote":"In a subgroup of 210 low-carb dieters, those who consumed a higher percent of saturated fats as part of their overall diet had better levels of blood lipids, including both higher HDLs (good cholesterol) and lower triglycerides.","stance":"FOR","relevance":9,"credibility":9,"credibility_reason":"Published by Stanford University School of Medicine, cites peer-reviewed research in The American Journal of Clinical Nutrition, and quotes named nutrition expert Christopher Gardner, PhD."}]}
+{
+  "verdict": "MURKY",
+  "confidence": 5,
+  "summary": "The evidence is mixed on whether keto lowers cholesterol. Some studies show improved HDL and triglycerides, while others report increased LDL. Individual response varies significantly.",
+  "sources": [
+    {
+      "url": "https://www.jacc.org/doi/10.1016/j.jacadv.2024.101109",
+      "title": "Carbohydrate Restriction-Induced Elevations in LDL-Cholesterol ...",
+      "quote": "Increases in low-density lipoprotein cholesterol (LDL-C) can occur on carbohydrate restricted ketogenic diets. Lean metabolically healthy individuals with a low triglyceride-to-high-density lipoprotein cholesterol ratio appear particularly susceptible, giving rise to the novel 'lean mass hyper-responder' (LMHR) phenotype.",
+      "stance": "AGAINST",
+      "relevance": 10,
+      "credibility": 9,
+      "credibility_reason": "Published in JACC (Journal of the American College of Cardiology), a peer-reviewed, high-impact medical journal; presents original research with clinical data, imaging studies, and matched cohort analysis."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7449640/",
+      "title": "Significant Impact of the Ketogenic Diet on Low-Density Lipoprotein ...",
+      "quote": "Significant Impact of the Ketogenic Diet on Low-Density Lipoprotein Cholesterol Levels",
+      "stance": "FOR",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Published in peer-reviewed medical journal indexed in PubMed Central (NIH/NLM), with named authors from accredited medical institutions and .gov domain hosting."
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S0146280624000410",
+      "title": "Ketogenic diet and cardiovascular risk \u2013 state of the art review",
+      "quote": "The ketogenic diet presents the potential for rapid short-term reduction of body mass, triglycerides level, Hb1Ac, and blood pressure. Its efficacy for weight loss and the above-mentioned metabolic changes is not significant in long-term observations.",
+      "stance": "NEUTRAL",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Published in peer-reviewed journal (Current Problems in Cardiology) by Elsevier with DOI, authored by MD PhD researcher, and presents evidence-based state-of-the-art review with rigorous methodology."
+    },
+    {
+      "url": "https://www.health.harvard.edu/heart-health/keto-diet-is-not-healthy-and-may-harm-the-heart",
+      "title": "Keto diet is not healthy and may harm the heart - Harvard Health",
+      "quote": "Keto diet is not healthy and may harm the heart",
+      "stance": "AGAINST",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Harvard Health is a highly authoritative medical institution with peer-reviewed editorial oversight from Harvard Medical School faculty, lending strong credibility to health claims."
+    },
+    {
+      "url": "https://med.stanford.edu/news/insights/2019/01/higher-percentages-of-saturated-fat-in-low-carb-diets-may-not-harm-cholesterol-levels-new-analysis-suggests.html",
+      "title": "Higher percentages of saturated fat in low-carb diets may not harm ...",
+      "quote": "In a subgroup of 210 low-carb dieters, those who consumed a higher percent of saturated fats as part of their overall diet had better levels of blood lipids, including both higher HDLs (good cholesterol) and lower triglycerides.",
+      "stance": "FOR",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Published by Stanford University School of Medicine, cites peer-reviewed research in The American Journal of Clinical Nutrition, and quotes named nutrition expert Christopher Gardner, PhD."
+    }
+  ]
+}

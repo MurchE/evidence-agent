@@ -1,1 +1,52 @@
-{"verdict":"MURKY","confidence":4,"summary":"The evidence is inconclusive on whether red wine in moderation is good for your heart. While traditional sources like Mayo Clinic support cardiovascular benefits from moderate red wine consumption, recent high-credibility scientific statements using advanced methodologies have challenged this premise, finding no positive health effects at any alcohol level. The scientific community remains divided on this question, with methodological concerns undermining confidence in earlier studies that showed benefits.","sources":[{"url":"https://www.mayoclinic.org/diseases-conditions/heart-disease/in-depth/red-wine/art-20048281","title":"Red wine and resveratrol: Good for your heart? - Mayo Clinic","quote":"Red wine, in limited amounts, has long been thought of as healthy for the heart. The alcohol and substances in red wine called antioxidants may help prevent coronary artery disease.","stance":"FOR","relevance":10,"credibility":9,"credibility_reason":"Mayo Clinic is a highly authoritative medical institution (.org domain) that employs medical editors, cites peer-reviewed research, and presents evidence-based information with appropriate scientific nuance about ongoing uncertainty."},{"url":"https://www.ahajournals.org/doi/pdf/10.1161/CIR.0000000000001341","title":"Alcohol Use and Cardiovascular Disease: A Scientific Statement ...","quote":"Data from recent studies using new methodologies (eg, individual participant-level data meta-analysis and mendelian randomization) have challenged the idea that any level of alcohol consumption has positive health effects.","stance":"AGAINST","relevance":10,"credibility":10,"credibility_reason":"Published by the American Heart Association in a peer-reviewed scientific journal with authoritative cardiovascular experts as authors, representing the highest level of medical evidence."},{"url":"https://journals.sagepub.com/doi/10.1089/jmf.2023.0054","title":"Red Wine Consumption and the Impact on Cardiovascular Health","quote":"However, due to the nature of these studies, the scientific community has raised concerns about the methodological approach of the studies and thus the generalization of their results.","stance":"NEUTRAL","relevance":9,"credibility":9,"credibility_reason":"Peer-reviewed academic journal (Journal of Medicinal Food) with impact factor 2.0, published through SAGE, employing rigorous methodological standards and transparency disclosures."},{"url":"https://www.frontiersin.org/journals/pharmacology/articles/10.3389/fphar.2024.1368949/full","title":"Resveratrol and vascular health: evidence from clinical studies and ...","quote":"The findings from randomized controlled trials show contrasting results on the effects of resveratrol supplementation and vascular biomarkers without dose-dependent effect. In particular, studies in which resveratrol was integrated using food sources, i.e., red wine, reported significant effects although the resveratrol content was, on average, much lower.","stance":"NEUTRAL","relevance":9,"credibility":9,"credibility_reason":"Published in peer-reviewed journal Frontiers in Pharmacology by established researchers from multiple universities with institutional affiliations, using systematic review methodology of clinical trials."},{"url":"https://www.ahajournals.org/doi/10.1161/circulationaha.117.030387","title":"Wine and Cardiovascular Health | Circulation","quote":"Although evidence of these cardiovascular benefits is inconsistent and heavily debated by physicians and scientists alike, epidemiological studies have strongly supported this view being specific to wine.","stance":"NEUTRAL","relevance":9,"credibility":9,"credibility_reason":"Published in Circulation, a peer-reviewed journal by the American Heart Association, with academic rigor, citations to studies, and balanced discussion of the evidence."}]}
+{
+  "verdict": "MURKY",
+  "confidence": 4,
+  "summary": "The evidence is inconclusive on whether red wine benefits heart health. Early studies suggested benefits from resveratrol, but recent research challenges the claim that any alcohol consumption is cardioprotective.",
+  "sources": [
+    {
+      "url": "https://www.mayoclinic.org/diseases-conditions/heart-disease/in-depth/red-wine/art-20048281",
+      "title": "Red wine and resveratrol: Good for your heart? - Mayo Clinic",
+      "quote": "Red wine, in limited amounts, has long been thought of as healthy for the heart. The alcohol and substances in red wine called antioxidants may help prevent coronary artery disease.",
+      "stance": "FOR",
+      "relevance": 10,
+      "credibility": 9,
+      "credibility_reason": "Mayo Clinic is a highly authoritative medical institution (.org domain) that employs medical editors, cites peer-reviewed research, and presents evidence-based information with appropriate scientific nuance about ongoing uncertainty."
+    },
+    {
+      "url": "https://www.ahajournals.org/doi/pdf/10.1161/CIR.0000000000001341",
+      "title": "Alcohol Use and Cardiovascular Disease: A Scientific Statement ...",
+      "quote": "Data from recent studies using new methodologies (eg, individual participant-level data meta-analysis and mendelian randomization) have challenged the idea that any level of alcohol consumption has positive health effects.",
+      "stance": "AGAINST",
+      "relevance": 10,
+      "credibility": 10,
+      "credibility_reason": "Published by the American Heart Association in a peer-reviewed scientific journal with authoritative cardiovascular experts as authors, representing the highest level of medical evidence."
+    },
+    {
+      "url": "https://journals.sagepub.com/doi/10.1089/jmf.2023.0054",
+      "title": "Red Wine Consumption and the Impact on Cardiovascular Health",
+      "quote": "However, due to the nature of these studies, the scientific community has raised concerns about the methodological approach of the studies and thus the generalization of their results.",
+      "stance": "NEUTRAL",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Peer-reviewed academic journal (Journal of Medicinal Food) with impact factor 2.0, published through SAGE, employing rigorous methodological standards and transparency disclosures."
+    },
+    {
+      "url": "https://www.frontiersin.org/journals/pharmacology/articles/10.3389/fphar.2024.1368949/full",
+      "title": "Resveratrol and vascular health: evidence from clinical studies and ...",
+      "quote": "The findings from randomized controlled trials show contrasting results on the effects of resveratrol supplementation and vascular biomarkers without dose-dependent effect. In particular, studies in which resveratrol was integrated using food sources, i.e., red wine, reported significant effects although the resveratrol content was, on average, much lower.",
+      "stance": "NEUTRAL",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Published in peer-reviewed journal Frontiers in Pharmacology by established researchers from multiple universities with institutional affiliations, using systematic review methodology of clinical trials."
+    },
+    {
+      "url": "https://www.ahajournals.org/doi/10.1161/circulationaha.117.030387",
+      "title": "Wine and Cardiovascular Health | Circulation",
+      "quote": "Although evidence of these cardiovascular benefits is inconsistent and heavily debated by physicians and scientists alike, epidemiological studies have strongly supported this view being specific to wine.",
+      "stance": "NEUTRAL",
+      "relevance": 9,
+      "credibility": 9,
+      "credibility_reason": "Published in Circulation, a peer-reviewed journal by the American Heart Association, with academic rigor, citations to studies, and balanced discussion of the evidence."
+    }
+  ]
+}
