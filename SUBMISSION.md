@@ -1,10 +1,13 @@
-# Evidence Agent — Hackathon Submission
+# JudiciAI — Hackathon Submission
 
 > **ElevenLabs + Firecrawl Hackathon | March 2026**
+> **Tagline:** The evidence speaks.
 
 ## What It Does
 
-Evidence Agent is a voice-first claim verification tool. Speak or type any claim — "Coffee prevents heart disease," "The Great Wall is visible from space" — and the agent searches the web, classifies sources by stance and credibility, and delivers a spoken verdict.
+JudiciAI is a voice-first claim verification tool that acts like a judge ruling on evidence — not a chatbot guessing at truth. Type any claim — "Keto lowers cholesterol," "Red wine is good for your heart" — and JudiciAI searches the web, classifies each source by stance and credibility, and delivers a spoken verdict: **SUPPORTED, UNSUPPORTED, or MURKY.**
+
+The key differentiator: **JudiciAI says "I don't know" when the evidence is genuinely uncertain.** The MURKY verdict surfaces real scientific disagreement instead of fabricating confidence. Every source is cited, scored, and clickable. Bull 🐂 and Bear 🐻 cases steel-man both sides of the argument.
 
 The full pipeline:
 
