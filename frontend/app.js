@@ -12,7 +12,7 @@ const confidenceNum = document.getElementById("confidenceNum");
 const verdictSummary = document.getElementById("verdictSummary");
 const sources = document.getElementById("sources");
 const sourceCards = document.getElementById("sourcePanelCards");
-let selectedVoice = "rachel"; // default ElevenLabs voice
+let selectedVoice = "murch"; // default to Murch's cloned voice
 
 // --- Sidebar & Sources Panel ---
 // Each panel is independent — opening one does NOT affect the other
