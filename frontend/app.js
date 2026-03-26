@@ -120,7 +120,7 @@ function pickExampleClaim(claim) {
 renderExampleClaims();
 
 // Playback speed
-let playbackRate = 1.0;
+let playbackRate = 1.3;
 
 function renderSidebarHistory() {
   const history = getHistory();
@@ -402,7 +402,10 @@ function updatePlayBtn() {
 }
 
 function changeSpeed(delta) {
-  playbackRate = Math.max(0.5, Math.min(2.0, playbackRate + delta));
+  const SPEEDS = [0.8, 1.0, 1.2, 1.3, 1.5, 1.7, 2.0];
+  const current = SPEEDS.indexOf(SPEEDS.reduce((a, b) => Math.abs(b - playbackRate) < Math.abs(a - playbackRate) ? b : a));
+  const next = Math.max(0, Math.min(SPEEDS.length - 1, current + (delta > 0 ? 1 : -1)));
+  playbackRate = SPEEDS[next];
   if (currentAudio) currentAudio.playbackRate = playbackRate;
   const el = document.getElementById("speedDisplay");
   if (el) el.textContent = playbackRate.toFixed(1) + "x";
