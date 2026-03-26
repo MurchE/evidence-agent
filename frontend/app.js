@@ -586,7 +586,10 @@ async function loadBullBearCache() {
   Object.assign(BULL_BEAR_CACHE, BULL_BEAR_PRESET);
   try {
     const bullResp = await fetch("cache/redwine-bull.json");
-    if (bullResp.ok) BULL_BEAR_CACHE["bull:Red wine in moderation is good for your heart"] = await bullResp.json();
+    if (bullResp.ok) BULL_BEAR_CACHE["bull:GLP-1 drugs have no known side effects"] = await (await fetch("cache/glp1-bull.json")).json();
+    } catch(e) {}
+    try {
+    BULL_BEAR_CACHE["bull:Red wine in moderation is good for your heart"] = await bullResp.json();
     const bearResp = await fetch("cache/redwine-bear.json");
     if (bearResp.ok) BULL_BEAR_CACHE["bear:Red wine in moderation is good for your heart"] = await bearResp.json();
   } catch(e) {}
