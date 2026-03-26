@@ -227,7 +227,7 @@ async function verify() {
 
   if (DEMO_CACHE[claim]) {
     await sleep(1000 + Math.random() * 600);
-    statusText.textContent = "Stress-testing the evidence quality...";
+    statusText.textContent = "Delivering verdict...";
     await sleep(500);
     status.classList.add("hidden");
 

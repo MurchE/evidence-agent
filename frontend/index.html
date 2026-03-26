@@ -106,14 +106,17 @@
       >
         Verify Claim
       </button>
-      <p class="text-xs text-muted">Press <span class="font-semibold text-gray-700">Enter</span> or <span class="font-semibold text-gray-700">Cmd/Ctrl + Enter</span> to verify quickly</p>
+      
       <!-- Example claims (hidden after first query) -->
-      <div id="exampleClaims" class="w-full max-w-2xl rounded-2xl border border-border bg-panel/70 backdrop-blur-sm px-3 py-3 sm:px-4">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <span class="text-xs uppercase tracking-wide text-muted font-semibold">Demo-Ready Claims</span>
-          <span class="text-[11px] text-muted">Tap one to run instantly</span>
-        </div>
-        <div id="exampleCarousel" class="example-carousel"></div>
+      <div id="exampleClaims" class="flex flex-wrap gap-2 justify-center items-center">
+        <span class="text-xs text-muted self-center">Examples to try</span>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors">Coffee prevents heart disease</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors">The Great Wall is visible from space</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors">Humans only use 10% of their brain</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full hover:bg-amber-100 transition-colors">Red wine in moderation is good for your heart</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full hover:bg-amber-100 transition-colors">AI will replace most white-collar jobs within 5 years</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full hover:bg-amber-100 transition-colors">Intermittent fasting extends lifespan</button>
+        <button onclick="claimInput.value=this.textContent;verify()" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full hover:bg-amber-100 transition-colors">Keto can lower your cholesterol</button>
       </div>
     </div>
 
