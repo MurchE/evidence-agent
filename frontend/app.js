@@ -512,6 +512,7 @@ async function loadDemoCache() {
     { claim: "Coffee prevents heart disease", file: "cache/coffee.json" },
     { claim: "Red wine in moderation is good for your heart", file: "cache/redwine.json" },
     { claim: "Keto can lower your cholesterol", file: "cache/keto.json" },
+    { claim: "GLP-1 drugs have no known side effects", file: "cache/glp1.json" },
   ];
   for (const d of demos) {
     try {
