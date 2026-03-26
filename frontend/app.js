@@ -913,6 +913,7 @@ document.addEventListener("keydown", (e) => {
         recognition.onresult = (ev) => {
           const transcript = ev.results[0][0].transcript;
           document.getElementById("followupInput").value = transcript;
+          document.getElementById("followupInput").placeholder = '⚖️ George is weighing the evidence...';
           askFollowup();
         };
         recognition.start();

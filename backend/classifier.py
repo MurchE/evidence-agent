@@ -36,13 +36,13 @@ Respond with JSON only:
 {{
   "verdict": "SUPPORTED|UNSUPPORTED|MURKY",
   "confidence": 1-10,
-  "summary": "2-3 sentence ruling on the evidence"
+  "summary": "1-2 SHORT sentences ruling on the evidence (max 40 words)"
 }}
 
 CRITICAL RULES FOR THE SUMMARY:
 - The FIRST sentence MUST be a clear ruling: "The evidence supports that..." or "The evidence does not support that..." or "The evidence is inconclusive on whether..."
 - Do NOT jump into explanation first. Lead with the ruling.
-- Then explain WHY in 1-2 more sentences.
+- Keep it under 40 words total. Punchy, not verbose.
 
 Verdict rules:
 - SUPPORTED: clear majority of credible sources support the claim
