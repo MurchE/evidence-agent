@@ -58,10 +58,10 @@ function renderSidebarHistory() {
     const style = VERDICT_STYLES[h.verdict] || VERDICT_STYLES.MURKY;
     const time = new Date(h.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const date = new Date(h.ts).toLocaleDateString();
-    return '<button onclick="claimInput.value=\'' + h.claim.replace(/'/g, "\\'") + '\';verify();toggleSidebar()" class="w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-lg px-3 py-2.5 hover:border-gray-600 transition-colors">' +
-      '<p class="text-xs truncate text-gray-300">' + h.claim + '</p>' +
+    return '<button onclick="claimInput.value=\'' + h.claim.replace(/'/g, "\\'") + '\';verify();toggleSidebar()" class="w-full text-left bg-gray-50 border border-border rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">' +
+      '<p class="text-xs truncate text-gray-700">' + h.claim + '</p>' +
       '<div class="flex items-center justify-between mt-1">' +
-        '<span class="text-[10px] text-gray-600">' + date + ' ' + time + '</span>' +
+        '<span class="text-[10px] text-muted">' + date + ' ' + time + '</span>' +
         '<span class="text-[10px] font-bold ' + style.text + '">' + h.verdict + ' ' + h.confidence + '/10</span>' +
       '</div>' +
     '</button>';
@@ -352,9 +352,9 @@ function newClaim() {
 
 // --- Render ---
 const VERDICT_STYLES = {
-  SUPPORTED:   { bg: "bg-emerald-900/60", border: "border-emerald-500", barBg: "bg-emerald-400", text: "text-emerald-300" },
-  UNSUPPORTED: { bg: "bg-red-900/60",     border: "border-red-500",     barBg: "bg-red-400",     text: "text-red-300" },
-  MURKY:       { bg: "bg-amber-900/60",    border: "border-amber-500",   barBg: "bg-amber-400",   text: "text-amber-300" },
+  SUPPORTED:   { bg: "bg-emerald-50", border: "border-emerald-500", barBg: "bg-emerald-500", text: "text-emerald-700" },
+  UNSUPPORTED: { bg: "bg-red-50",     border: "border-red-500",     barBg: "bg-red-500",     text: "text-red-700" },
+  MURKY:       { bg: "bg-amber-50",   border: "border-amber-500",   barBg: "bg-amber-500",   text: "text-amber-700" },
 };
 
 function renderVerdict(data) {
@@ -390,9 +390,9 @@ function renderVerdict(data) {
 }
 
 const STANCE_BADGE = {
-  FOR:     "bg-emerald-800 text-emerald-200",
-  AGAINST: "bg-red-800 text-red-200",
-  NEUTRAL: "bg-gray-700 text-gray-300",
+  FOR:     "bg-emerald-100 text-emerald-700 border-emerald-200",
+  AGAINST: "bg-red-100 text-red-700 border-red-200",
+  NEUTRAL: "bg-gray-100 text-gray-600 border-gray-200",
 };
 
 function renderSources(srcs) {
@@ -400,35 +400,37 @@ function renderSources(srcs) {
   const sourceCount = document.getElementById("sourceCount");
   if (sourceCount) sourceCount.textContent = srcs.length + " sources found — click to view details →";
 
-  sourceCards.innerHTML = srcs.map((s) => {
+  const cardHtml = srcs.map((s) => {
     const domain = new URL(s.url).hostname.replace("www.", "");
     const badge = STANCE_BADGE[s.stance] || STANCE_BADGE.NEUTRAL;
     const cred = s.credibility || 5;
-    const credColor = cred >= 7 ? "text-emerald-400" : cred >= 4 ? "text-amber-400" : "text-red-400";
-    const credBarColor = cred >= 7 ? "bg-emerald-400" : cred >= 4 ? "bg-amber-400" : "bg-red-400";
+    const credColor = cred >= 7 ? "text-emerald-600" : cred >= 4 ? "text-amber-600" : "text-red-600";
+    const credBarColor = cred >= 7 ? "bg-emerald-500" : cred >= 4 ? "bg-amber-500" : "bg-red-500";
     return `
-      <div class="source-card bg-[#1A1A1A] border border-gray-800 rounded-xl p-5">
+      <div class="source-card bg-panel border border-border rounded-xl p-4">
         <div class="flex items-center justify-between mb-2">
-          <div>
-            <span class="text-xs text-gray-500">${domain}</span>
-            <h3 class="font-semibold text-sm leading-tight">${s.title || domain}</h3>
+          <div class="min-w-0 flex-1">
+            <span class="text-xs text-muted">${domain}</span>
+            <h3 class="font-semibold text-sm leading-tight text-gray-800">${s.title || domain}</h3>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold px-2 py-1 rounded ${badge}">${s.stance}</span>
-          </div>
+          <span class="text-xs font-bold px-2 py-1 rounded border ${badge} shrink-0 ml-2">${s.stance}</span>
         </div>
         <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-gray-500">Credibility</span>
-          <div class="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+          <span class="text-xs text-muted">Credibility</span>
+          <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div class="h-full rounded-full ${credBarColor}" style="width: ${cred * 10}%"></div>
           </div>
           <span class="text-xs font-semibold ${credColor}">${cred}/10</span>
-          ${s.credibility_reason ? `<span class="text-xs text-gray-500 ml-1">— ${s.credibility_reason}</span>` : ""}
         </div>
-        ${s.quote ? `<blockquote class="border-l-2 border-gray-600 pl-3 text-sm text-gray-400 italic mt-2">"${s.quote}"</blockquote>` : ""}
-        <a href="${s.url}" target="_blank" class="text-xs text-blue-400 hover:underline mt-2 inline-block">View source</a>
+        ${s.quote ? '<blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-gray-500 italic mt-2">"' + s.quote + '"</blockquote>' : ""}
+        <a href="${s.url}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">View source &rarr;</a>
       </div>`;
   }).join("");
+
+  // Populate both desktop panel and mobile inline cards
+  sourceCards.innerHTML = cardHtml;
+  const mobileCards = document.getElementById("mobileSourceCards");
+  if (mobileCards) mobileCards.innerHTML = cardHtml;
 
   sources.classList.remove("hidden");
 }
