@@ -386,13 +386,41 @@ function newClaim() {
 }
 
 // --- Bull & Bear (steelman / steelman-against) ---
+// Pre-cached bull/bear for demo claims
+const BULL_BEAR_CACHE = {};
+async function loadBullBearCache() {
+  try {
+    const bullResp = await fetch("cache/redwine-bull.json");
+    if (bullResp.ok) BULL_BEAR_CACHE["bull:Red wine in moderation is good for your heart"] = await bullResp.json();
+    const bearResp = await fetch("cache/redwine-bear.json");
+    if (bearResp.ok) BULL_BEAR_CACHE["bear:Red wine in moderation is good for your heart"] = await bearResp.json();
+  } catch(e) {}
+}
+loadBullBearCache();
+
 function askBullCase() {
+  const claim = claimInput.value.trim();
+  const cached = BULL_BEAR_CACHE["bull:" + claim];
+  if (cached) {
+    const answers = document.getElementById("followupAnswers");
+    answers.innerHTML += '<div class="text-sm bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3"><p class="text-xs text-emerald-600 font-semibold mb-1">🐂 Bull Case</p><p class="text-gray-700">' + cached.answer + '</p></div>';
+    speakText(cached.answer);
+    return;
+  }
   const input = document.getElementById("followupInput");
   input.value = "What is the strongest evidence supporting this claim? Steel-man the case FOR it.";
   askFollowup();
 }
 
 function askBearCase() {
+  const claim = claimInput.value.trim();
+  const cached = BULL_BEAR_CACHE["bear:" + claim];
+  if (cached) {
+    const answers = document.getElementById("followupAnswers");
+    answers.innerHTML += '<div class="text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3"><p class="text-xs text-red-600 font-semibold mb-1">🐻 Bear Case</p><p class="text-gray-700">' + cached.answer + '</p></div>';
+    speakText(cached.answer);
+    return;
+  }
   const input = document.getElementById("followupInput");
   input.value = "What is the strongest evidence against this claim? Steel-man the case AGAINST it.";
   askFollowup();

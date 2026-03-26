@@ -33,6 +33,15 @@ class ClaimRequest(BaseModel):
 class TTSRequest(BaseModel):
     text: str
     voice_id: str | None = None
+    voice: str | None = None  # name-based selection
+
+# ElevenLabs voice name → ID mapping
+VOICE_MAP = {
+    "rachel": "21m00Tcm4TlvDq8ikWAM",      # Rachel — clear, authoritative
+    "george": "JBFqnCBsd6RMkjVDRZzb",       # George — British, crisp
+    "josh": "TxGEqnHWrfWFTfGW9XjX",         # Josh — young, enthusiastic
+    "murch": "k8OsasklrEkKLNYd4ykK",           # Murch — cloned voice
+}
 
 
 class FollowUpRequest(BaseModel):
@@ -111,9 +120,15 @@ async def text_to_speech(req: TTSRequest):
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+    # Resolve voice: explicit ID > name lookup > default
+    voice_id = req.voice_id
+    if not voice_id and req.voice:
+        voice_id = VOICE_MAP.get(req.voice.lower(), "21m00Tcm4TlvDq8ikWAM")
+    voice_id = voice_id or "21m00Tcm4TlvDq8ikWAM"
+
     audio_bytes = await synth.synthesize(
         text=req.text.strip(),
-        voice_id=req.voice_id or "21m00Tcm4TlvDq8ikWAM",
+        voice_id=voice_id,
     )
     return Response(content=audio_bytes, media_type="audio/mpeg")
 
