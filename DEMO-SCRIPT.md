@@ -10,7 +10,11 @@
 
 *[Screen: JudiciAI landing page, clean and bright]*
 
-**Voice:** "Your boss just told you keto lowers cholesterol. Your doctor says the opposite. Who's right? Let's find out — in under 60 seconds."
+**Voice:** "Every AI gives you a confident answer. This one gives you the evidence."
+
+*[beat — let it land — then:]*
+
+**Voice:** "Let's find out what's actually true — in under 60 seconds."
 
 ## Shot 2: The Claim (8-15s)
 
@@ -24,7 +28,7 @@
 *[Verdict appears: MURKY, confidence 5/10]*
 *[Scroll to show sources with credibility scores]*
 
-**Voice:** "Verdict: MURKY. Confidence 5 out of 10. The evidence is genuinely split. And unlike ChatGPT, we don't pretend to know when the science doesn't. Every source is cited. Every score is explained. Click through and verify yourself."
+**Voice:** "Verdict: MURKY. Confidence 5 out of 10. The evidence is split — and we show you exactly why. Every source cited, every score explained. Click through and verify yourself."
 
 ## Shot 4: Bull & Bear (28-38s)
 
