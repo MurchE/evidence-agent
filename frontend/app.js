@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8002";
+const API_URL = "http://localhost:8000";
 
 const claimInput = document.getElementById("claimInput");
 const micBtn = document.getElementById("micBtn");
@@ -15,28 +15,37 @@ const sourceCards = document.getElementById("sourcePanelCards");
 let selectedVoice = "rachel"; // default ElevenLabs voice
 
 // --- Sidebar & Sources Panel ---
+// Each panel is independent — opening one does NOT affect the other
 function toggleSidebar() {
   const sb = document.getElementById("sidebar");
+  const sp = document.getElementById("sourcesPanel");
   const ov = document.getElementById("overlay");
   sb.classList.toggle("closed");
   if (!sb.classList.contains("closed")) {
-    ov.classList.remove("hidden");
     renderSidebarHistory();
-  } else {
-    ov.classList.add("hidden");
   }
+  // Show overlay if either panel is open
+  const anyOpen = !sb.classList.contains("closed") || !sp.classList.contains("closed");
+  ov.classList.toggle("hidden", !anyOpen);
 }
 
 function toggleSources() {
   const sp = document.getElementById("sourcesPanel");
+  const sb = document.getElementById("sidebar");
   const ov = document.getElementById("overlay");
   sp.classList.toggle("closed");
-  if (!sp.classList.contains("closed")) {
-    ov.classList.remove("hidden");
-  } else {
-    ov.classList.add("hidden");
-  }
+  const anyOpen = !sb.classList.contains("closed") || !sp.classList.contains("closed");
+  ov.classList.toggle("hidden", !anyOpen);
 }
+
+function closeAllPanels() {
+  document.getElementById("sidebar").classList.add("closed");
+  document.getElementById("sourcesPanel").classList.add("closed");
+  document.getElementById("overlay").classList.add("hidden");
+}
+
+// Playback speed
+let playbackRate = 1.0;
 
 function renderSidebarHistory() {
   const history = getHistory();
@@ -207,11 +216,48 @@ claimInput.addEventListener("keydown", (e) => {
 
 // --- Voice Output (ElevenLabs TTS) ---
 let currentAudio = null;
+let isPlaying = false;
+
+function togglePlayPause() {
+  if (!currentAudio) return;
+  if (isPlaying) {
+    currentAudio.pause();
+    isPlaying = false;
+    updatePlayBtn();
+  } else {
+    currentAudio.play();
+    isPlaying = true;
+    updatePlayBtn();
+  }
+}
+
+function updatePlayBtn() {
+  const btn = document.getElementById("speakerBtn");
+  if (!btn) return;
+  if (isPlaying) {
+    btn.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    btn.classList.add("playing");
+  } else {
+    btn.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    btn.classList.remove("playing");
+  }
+}
+
+function changeSpeed(delta) {
+  playbackRate = Math.max(0.5, Math.min(2.0, playbackRate + delta));
+  if (currentAudio) currentAudio.playbackRate = playbackRate;
+  const el = document.getElementById("speedDisplay");
+  if (el) el.textContent = playbackRate.toFixed(1) + "x";
+}
 
 async function speakText(text) {
+  // Always stop current audio first
   if (currentAudio) {
     currentAudio.pause();
+    currentAudio.currentTime = 0;
     currentAudio = null;
+    isPlaying = false;
+    updatePlayBtn();
   }
 
   try {
@@ -226,14 +272,17 @@ async function speakText(text) {
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
     currentAudio = new Audio(url);
+    currentAudio.playbackRate = playbackRate;
     currentAudio.play();
+    isPlaying = true;
+    updatePlayBtn();
 
     // Update speaker button state
     const speakerBtn = document.getElementById("speakerBtn");
     if (speakerBtn) {
-      speakerBtn.classList.add("playing");
       currentAudio.addEventListener("ended", () => {
-        speakerBtn.classList.remove("playing");
+        isPlaying = false;
+        updatePlayBtn();
         URL.revokeObjectURL(url);
         currentAudio = null;
       });

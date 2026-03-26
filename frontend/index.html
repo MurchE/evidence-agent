@@ -21,7 +21,7 @@
 <body class="bg-[#0D0D0D] text-white min-h-screen font-[Inter] overflow-x-hidden">
 
   <!-- LEFT SIDEBAR — History -->
-  <div id="sidebar" class="sidebar closed fixed left-0 top-0 h-full w-72 bg-[#111] border-r border-gray-800 z-40 flex flex-col">
+  <div id="sidebar" class="sidebar closed fixed left-0 top-0 h-full w-96 bg-[#111] border-r border-gray-800 z-40 flex flex-col">
     <div class="flex items-center justify-between p-4 border-b border-gray-800">
       <h2 class="text-sm font-bold text-gray-300">History</h2>
       <button onclick="toggleSidebar()" class="text-gray-500 hover:text-white text-lg">&times;</button>
@@ -30,7 +30,7 @@
   </div>
 
   <!-- RIGHT PANEL — Sources -->
-  <div id="sourcesPanel" class="sources-panel closed fixed right-0 top-0 h-full w-80 bg-[#111] border-l border-gray-800 z-40 flex flex-col">
+  <div id="sourcesPanel" class="sources-panel closed fixed right-0 top-0 h-full w-[420px] bg-[#111] border-l border-gray-800 z-40 flex flex-col">
     <div class="flex items-center justify-between p-4 border-b border-gray-800">
       <h2 class="text-sm font-bold text-gray-300">Sources</h2>
       <button onclick="toggleSources()" class="text-gray-500 hover:text-white text-lg">&times;</button>
@@ -38,8 +38,8 @@
     <div id="sourcePanelCards" class="flex-1 overflow-y-auto p-3 space-y-3"></div>
   </div>
 
-  <!-- Overlay for mobile -->
-  <div id="overlay" class="hidden fixed inset-0 bg-black/50 z-30" onclick="toggleSidebar();toggleSources()"></div>
+  <!-- Overlay -->
+  <div id="overlay" class="hidden fixed inset-0 bg-black/50 z-30" onclick="closeAllPanels()"></div>
 
   <!-- MAIN CONTENT -->
   <div class="max-w-3xl mx-auto px-4 py-12">
@@ -109,26 +109,38 @@
 
     <!-- Verdict banner -->
     <div id="verdict" class="hidden mb-8 rounded-2xl p-6 relative">
-      <!-- Top-right actions -->
-      <div class="absolute top-3 right-3 flex items-center gap-2">
-        <button onclick="newClaim()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors">Ask Another</button>
-        <button onclick="discardClaim()" class="text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1.5 rounded-lg transition-colors">Discard</button>
+      <!-- Top-right icon actions -->
+      <div class="absolute top-3 right-3 flex items-center gap-1.5">
+        <button onclick="newClaim()" title="Ask another claim" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+          <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+        <button onclick="discardClaim()" title="Discard" class="w-8 h-8 rounded-full bg-white/10 hover:bg-red-900/40 flex items-center justify-center transition-all">
+          <svg class="w-4 h-4 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <p id="verdictClaim" class="text-xs text-white/50 mb-2 italic"></p>
       <div class="text-sm font-medium uppercase tracking-widest mb-1 opacity-70">Verdict</div>
       <div class="flex items-center justify-center gap-3">
         <div id="verdictLabel" class="text-3xl font-extrabold mb-2"></div>
-        <button
-          id="speakerBtn"
-          title="Replay verdict"
-          onclick="if(currentAudio){currentAudio.pause();currentAudio=null;this.classList.remove('playing')}else{speakText(document.getElementById('verdictSummary').dataset.narration)}"
-          class="speaker-btn w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all mb-2"
-        >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-          </svg>
-        </button>
+        <!-- Play/Pause + Speed controls -->
+        <div class="flex items-center gap-2 mb-2">
+          <button onclick="changeSpeed(-0.25)" title="Slower" class="w-6 h-6 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-[10px] text-gray-400 transition-all">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          </button>
+          <button
+            id="speakerBtn"
+            title="Play / Pause"
+            onclick="if(currentAudio){togglePlayPause()}else{speakText(document.getElementById('verdictSummary').dataset.narration)}"
+            class="speaker-btn w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button onclick="changeSpeed(0.25)" title="Faster" class="w-6 h-6 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-[10px] text-gray-400 transition-all">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+          </button>
+          <span id="speedDisplay" class="text-[10px] text-gray-500 ml-1">1.0x</span>
+        </div>
       </div>
       <div class="flex items-center justify-center gap-2 mb-3">
         <span class="text-sm opacity-70">Confidence</span>
@@ -157,19 +169,19 @@
 
       <!-- Share buttons -->
       <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <button onclick="copyVerdict()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
+        <button onclick="copyVerdict()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-2M16 3h5v5M10 14L20.2 3.8"/></svg>
           <span id="shareBtnText">Copy</span>
         </button>
-        <button onclick="shareToX()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
+        <button onclick="shareToX()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           X
         </button>
-        <button onclick="shareToLinkedIn()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
+        <button onclick="shareToLinkedIn()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
           LinkedIn
         </button>
-        <button onclick="shareToEmail()" class="text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
+        <button onclick="shareToEmail()" class="text-xs text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           Email
         </button>
@@ -208,8 +220,8 @@
       <div id="followupAnswers" class="mt-4 space-y-3"></div>
     </div>
 
-    <!-- Old history section hidden (replaced by sidebar) -->
-    <div id="history" class="hidden">
+    <!-- History is in sidebar now — this div kept for JS compatibility but always hidden -->
+    <div id="history" class="hidden" style="display:none!important">
       <div id="historyList"></div>
     </div>
   </div>
