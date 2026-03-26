@@ -139,6 +139,12 @@ async function verify() {
   statusText.textContent = "Weighing the evidence...";
 
   // Check demo cache first (instant results for pre-cached claims)
+  const AUDIO_CACHE = {
+    "Coffee prevents heart disease": "cache/audio/coffee.mp3",
+    "Red wine in moderation is good for your heart": "cache/audio/redwine.mp3",
+    "Keto can lower your cholesterol": "cache/audio/keto.mp3",
+  };
+
   if (DEMO_CACHE[claim]) {
     // Brief delay to look natural (1-2s)
     await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
@@ -149,6 +155,21 @@ async function verify() {
     renderVerdict(data);
     renderSources(data.sources || []);
     saveToHistory(claim, data.verdict, data.confidence);
+
+    // Play pre-generated audio instead of hitting TTS API
+    if (AUDIO_CACHE[claim]) {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      currentAudio = new Audio(AUDIO_CACHE[claim]);
+      currentAudio.playbackRate = playbackRate;
+      currentAudio.play();
+      isPlaying = true;
+      updatePlayBtn();
+      currentAudio.addEventListener("ended", () => {
+        isPlaying = false;
+        updatePlayBtn();
+        currentAudio = null;
+      });
+    }
     return;
   }
 
