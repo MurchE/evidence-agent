@@ -60,9 +60,9 @@
   <div id="overlay" class="hidden fixed inset-0 bg-black/30 z-30" onclick="closeAllPanels()"></div>
 
   <!-- MAIN CONTENT -->
-  <div class="max-w-3xl mx-auto px-4 py-10">
+  <div class="max-w-3xl mx-auto px-4 py-6">
     <!-- Top bar -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-4">
       <button onclick="toggleSidebar()" class="text-muted hover:text-gray-700 text-sm flex items-center gap-1.5" aria-label="Open history">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         History
@@ -79,7 +79,7 @@
     </div>
 
     <!-- Input area -->
-    <div class="flex flex-col items-center gap-4 mb-10">
+    <div class="flex flex-col items-center gap-3 mb-6">
       <div class="relative w-full">
         <input
           id="claimInput"
@@ -144,7 +144,7 @@
     </div>
 
     <!-- Verdict banner -->
-    <div id="verdict" class="hidden mb-8 rounded-2xl p-4 relative border-2 text-center">
+    <div id="verdict" class="hidden mb-8 rounded-xl p-3 relative border-2 text-center">
       <p id="verdictClaim" class="text-xs text-gray-500 mb-2 italic"></p>
       <div class="text-xs font-medium uppercase tracking-widest mb-1 text-gray-500">The evidence</div>
       <div class="flex items-center justify-center gap-3">
@@ -170,7 +170,7 @@
       </div>
 
       <!-- Bull & Bear + Discard & Verify Another (horizontal rows inside verdict box) -->
-      <div class="flex flex-wrap items-center justify-center gap-2 my-3">
+      <div class="flex flex-wrap items-center justify-center gap-2 my-2">
         <button onclick="askBullCase()" title="Strongest evidence FOR" class="debate-btn bull-case-btn" aria-label="Bull case">
           <span class="text-base">🐂</span>
           <span class="text-xs font-semibold">Bull Case</span>
@@ -223,7 +223,7 @@
 
       <!-- Share buttons -->
       <div class="flex flex-wrap items-center justify-center gap-2">
-        <button onclick="shareVerdict()" class="text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 border border-border">
+        <button onclick="shareVerdict()" class="text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 border border-border whitespace-nowraptext-xs text-gray-600 bg-gray-100 hover:bg-gray-200 border border-border">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8.684 13.342A3 3 0 118.7 7.658M15.316 10.658A3 3 0 1115.3 16.342M8.7 10.5h6.6"/></svg>
           <span id="shareVerdictBtnText">Share Verdict</span>
         </button>
