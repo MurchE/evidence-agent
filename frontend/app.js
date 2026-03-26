@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8002";
+const API_URL = "http://localhost:8000";
 
 const claimInput = document.getElementById("claimInput");
 const micBtn = document.getElementById("micBtn");
@@ -227,7 +227,7 @@ async function verify() {
 
   if (DEMO_CACHE[claim]) {
     await sleep(1000 + Math.random() * 600);
-    statusText.textContent = "Delivering verdict...";
+    statusText.textContent = "Stress-testing the evidence quality...";
     await sleep(500);
     status.classList.add("hidden");
 
