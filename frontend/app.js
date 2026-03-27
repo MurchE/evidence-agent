@@ -717,6 +717,81 @@ function renderFollowUpSuggestions(suggestions) {
   followupSection.insertBefore(container, followupInput);
 }
 
+// --- Helpers for inline citations & credibility ---
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function scrollToSource(num) {
+  const el = document.getElementById(`source-${num}`);
+  if (!el) return;
+  // Open sources panel on desktop if closed
+  const panel = document.getElementById("sourcesPanel");
+  if (panel && panel.classList.contains("closed") && window.innerWidth >= 768) {
+    toggleSources();
+    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 350);
+  } else {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  // Brief highlight
+  el.classList.add("source-highlight");
+  setTimeout(() => el.classList.remove("source-highlight"), 2000);
+}
+
+const CREDIBILITY_TIERS = {
+  gov: "🟢", edu: "🟢", "nih.gov": "🟢", "ncbi.nlm.nih.gov": "🟢",
+  "pubmed.ncbi.nlm.nih.gov": "🟢", "pmc.ncbi.nlm.nih.gov": "🟢",
+  "who.int": "🟢", "cdc.gov": "🟢", "fda.gov": "🟢",
+  "nature.com": "🟢", "sciencedirect.com": "🟢", "thelancet.com": "🟢",
+  "bmj.com": "🟢", "jci.org": "🟢", "nejm.org": "🟢",
+  "mayoclinic.org": "🟢", "clevelandclinic.org": "🟢",
+};
+const MAINSTREAM_DOMAINS = [
+  "nytimes.com", "washingtonpost.com", "bbc.com", "bbc.co.uk", "reuters.com",
+  "apnews.com", "theguardian.com", "wsj.com", "forbes.com", "bloomberg.com",
+  "cnn.com", "npr.org", "economist.com", "time.com", "wired.com",
+  "arstechnica.com", "theatlantic.com", "healthline.com", "webmd.com",
+  "wikipedia.org",
+];
+
+function getCredibilityTier(url) {
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "");
+    // Check exact domain match first
+    if (CREDIBILITY_TIERS[hostname]) return CREDIBILITY_TIERS[hostname];
+    // Check TLD for .gov, .edu
+    const tld = hostname.split(".").pop();
+    if (tld === "gov" || tld === "edu") return "🟢";
+    // Check second-level for .gov.xx patterns
+    const parts = hostname.split(".");
+    if (parts.length >= 2 && parts[parts.length - 2] === "gov") return "🟢";
+    // Mainstream media / established
+    if (MAINSTREAM_DOMAINS.some(d => hostname.endsWith(d))) return "🟡";
+    return "🔴";
+  } catch {
+    return "🔴";
+  }
+}
+
+const TIER_LABELS = {
+  "🟢": "Peer-reviewed / Gov",
+  "🟡": "Established publication",
+  "🔴": "Blog / Unknown",
+};
+
+function shareOneClick() {
+  const claim = document.getElementById("verdictClaim").textContent;
+  const v = verdictLabel.textContent;
+  const conf = confidenceNum.textContent;
+  const text = `"${claim}": ${v} (${conf}) — verified by Evidence Agent`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("shareOneClickText");
+    if (btn) { btn.textContent = "Copied!"; setTimeout(() => { btn.textContent = "Share Verdict"; }, 2000); }
+  });
+}
+
 // --- Render ---
 const VERDICT_STYLES = {
   SUPPORTED: {
@@ -759,7 +834,18 @@ function renderVerdict(data) {
   confidenceBar.className = `confidence-fill ${style.barBg}`;
   confidenceNum.textContent = `${conf}/10`;
 
-  verdictSummary.textContent = data.summary || "";
+  // Render summary with inline citation superscripts
+  const summaryText = data.summary || "";
+  const srcs = data.sources || [];
+  if (srcs.length > 0) {
+    verdictSummary.innerHTML = escapeHtml(summaryText) + " " +
+      srcs.map((_, i) => {
+        const num = i + 1;
+        return `<a href="#source-${num}" class="inline-citation" onclick="scrollToSource(${num});return false" title="Source ${num}">[${num}]</a>`;
+      }).join("");
+  } else {
+    verdictSummary.textContent = summaryText;
+  }
   verdict.classList.remove("hidden");
 
   // Store narration text for replay button
@@ -795,7 +881,8 @@ function renderSources(srcs) {
   const sourceCount = document.getElementById("sourceCount");
   if (sourceCount) sourceCount.textContent = srcs.length + " sources found — click to view details →";
 
-  const cardHtml = srcs.map((s) => {
+  const cardHtml = srcs.map((s, i) => {
+    const num = i + 1;
     const safeUrl = s.url || "";
     let domain = "source";
     try {
@@ -807,13 +894,15 @@ function renderSources(srcs) {
     const cred = s.credibility || 5;
     const credColor = cred >= 7 ? "text-emerald-600" : cred >= 4 ? "text-amber-600" : "text-red-600";
     const credBarColor = cred >= 7 ? "bg-emerald-500" : cred >= 4 ? "bg-amber-500" : "bg-red-500";
+    const tier = getCredibilityTier(safeUrl);
+    const tierLabel = TIER_LABELS[tier] || "";
     const sourceLink = safeUrl ? `<a href="${safeUrl}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">View source &rarr;</a>` : "";
     return `
-      <div class="source-card bg-panel border border-border rounded-xl p-4">
+      <div id="source-${num}" class="source-card bg-panel border border-border rounded-xl p-4 transition-all duration-300">
         <div class="flex items-center justify-between mb-2">
           <div class="min-w-0 flex-1">
-            <span class="text-xs text-muted">${domain}</span>
-            <h3 class="font-semibold text-sm leading-tight text-gray-800">${s.title || domain}</h3>
+            <span class="text-xs text-muted">${tier} ${domain} <span class="text-[10px] text-gray-400">${tierLabel}</span></span>
+            <h3 class="font-semibold text-sm leading-tight text-gray-800"><span class="text-blue-500 font-bold mr-1">[${num}]</span>${s.title || domain}</h3>
           </div>
           <span class="text-xs font-bold px-2 py-1 rounded border ${badge} shrink-0 ml-2">${s.stance}</span>
         </div>

@@ -26,14 +26,38 @@ body {
   }
 }
 
+/* Inline citation superscripts */
+.inline-citation {
+  display: inline;
+  font-size: 0.65em;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+  vertical-align: super;
+  line-height: 0;
+  margin: 0 1px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.inline-citation:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
 /* Source card hover */
 .source-card {
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.3s;
 }
 
 .source-card:hover {
   border-color: #444;
   transform: translateY(-1px);
+}
+
+/* Source card highlight when scrolled to via citation */
+.source-highlight {
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 12px rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6 !important;
 }
 
 /* Demo examples carousel */
