@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = window.__ENV__?.API_URL || window.location.origin;
 
 const claimInput = document.getElementById("claimInput");
 const micBtn = document.getElementById("micBtn");
@@ -71,6 +71,28 @@ function setVerifyState(active) {
 function dismissError() {
   if (errorState) errorState.classList.add("hidden");
   retryLastAction = null;
+}
+
+// --- Loading step progress ---
+const LOADING_STEPS = ["search", "scrape", "analyze", "synthesize"];
+
+function resetLoadingSteps() {
+  document.querySelectorAll(".loading-step").forEach((el) => {
+    el.classList.remove("active", "done");
+  });
+  setLoadingStep("search");
+}
+
+function setLoadingStep(stepName) {
+  const idx = LOADING_STEPS.indexOf(stepName);
+  if (idx === -1) return;
+  document.querySelectorAll(".loading-step").forEach((el, i) => {
+    const step = el.dataset.step;
+    const si = LOADING_STEPS.indexOf(step);
+    el.classList.remove("active", "done");
+    if (si < idx) el.classList.add("done");
+    else if (si === idx) el.classList.add("active");
+  });
 }
 
 function showError(message, retryAction) {
@@ -224,11 +246,20 @@ async function verify() {
   resetVerificationUI();
   status.classList.remove("hidden");
   statusText.textContent = "Weighing the evidence...";
+  resetLoadingSteps();
 
   if (DEMO_CACHE[claim]) {
-    await sleep(1000 + Math.random() * 600);
-    statusText.textContent = "Stress-testing the evidence quality...";
-    await sleep(500);
+    setLoadingStep("search");
+    await sleep(400 + Math.random() * 300);
+    setLoadingStep("scrape");
+    statusText.textContent = "Scraping content...";
+    await sleep(400 + Math.random() * 300);
+    setLoadingStep("analyze");
+    statusText.textContent = "Analyzing evidence...";
+    await sleep(400 + Math.random() * 300);
+    setLoadingStep("synthesize");
+    statusText.textContent = "Synthesizing verdict...";
+    await sleep(300);
     status.classList.add("hidden");
 
     const data = DEMO_CACHE[claim];
@@ -265,31 +296,44 @@ async function verify() {
     evtSource.addEventListener("step", (e) => {
       const data = JSON.parse(e.data);
       statusText.textContent = data.message;
+      // Map backend step messages to loading stages
+      const msg = data.message.toLowerCase();
+      if (msg.includes("decompos") || msg.includes("search quer")) setLoadingStep("search");
+      else if (msg.includes("searching") || msg.includes("firecrawl") || msg.includes("scraping")) setLoadingStep("scrape");
+      else if (msg.includes("classif") || msg.includes("analyz")) setLoadingStep("analyze");
+      else if (msg.includes("synthe") || msg.includes("verdict") || msg.includes("finaliz")) setLoadingStep("synthesize");
     });
 
     evtSource.addEventListener("queries", (e) => {
       const data = JSON.parse(e.data);
       statusText.textContent = `Generated ${data.queries.length} search queries`;
+      setLoadingStep("scrape");
     });
 
     evtSource.addEventListener("search_done", (e) => {
       const data = JSON.parse(e.data);
       statusText.textContent = `Found ${data.count} sources`;
+      setLoadingStep("analyze");
     });
 
     evtSource.addEventListener("source_classified", (e) => {
       const data = JSON.parse(e.data);
       statusText.textContent = `Classified ${data.index}/${data.total}: ${data.title.slice(0, 45)}...`;
+      setLoadingStep("analyze");
     });
 
     evtSource.addEventListener("result", (e) => {
       const data = JSON.parse(e.data);
       evtSource.close();
-      status.classList.add("hidden");
-      renderVerdict(data);
-      renderSources(data.sources || []);
-      saveToHistory(claim, data.verdict, data.confidence);
-      setVerifyState(false);
+      setLoadingStep("synthesize");
+      // Brief delay to show final step before hiding
+      setTimeout(() => {
+        status.classList.add("hidden");
+        renderVerdict(data);
+        renderSources(data.sources || []);
+        saveToHistory(claim, data.verdict, data.confidence);
+        setVerifyState(false);
+      }, 400);
     });
 
     evtSource.onerror = () => {

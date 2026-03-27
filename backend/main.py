@@ -306,7 +306,7 @@ Answer concisely (2-4 sentences) based on the evidence above. If the question as
 
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     resp = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=os.getenv("FOLLOWUP_MODEL", "claude-haiku-4-5"),
         max_tokens=300,
         messages=[{"role": "user", "content": prompt}],
     )

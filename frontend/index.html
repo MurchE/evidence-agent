@@ -121,14 +121,29 @@
       </div>
     </div>
 
-    <!-- Status (animated loading) -->
+    <!-- Status (multi-step loading skeleton) -->
     <div id="status" class="text-center text-muted mb-6 hidden">
-      <div class="loading-shell mx-auto">
-        <span class="loading-gavel">⚖️</span>
-        <div class="text-left flex-1 min-w-0">
-          <p id="statusText" class="text-sm font-semibold text-gray-700 mb-1">Weighing the evidence...</p>
-          <div class="loading-track">
-            <span class="loading-progress"></span>
+      <div class="loading-shell mx-auto flex-col !items-stretch gap-3">
+        <div class="flex items-center gap-3">
+          <span class="loading-gavel">⚖️</span>
+          <p id="statusText" class="text-sm font-semibold text-gray-700 text-left">Weighing the evidence...</p>
+        </div>
+        <div class="loading-steps">
+          <div class="loading-step" data-step="search">
+            <div class="step-dot"></div>
+            <span class="step-label">Searching sources</span>
+          </div>
+          <div class="loading-step" data-step="scrape">
+            <div class="step-dot"></div>
+            <span class="step-label">Scraping content</span>
+          </div>
+          <div class="loading-step" data-step="analyze">
+            <div class="step-dot"></div>
+            <span class="step-label">Analyzing evidence</span>
+          </div>
+          <div class="loading-step" data-step="synthesize">
+            <div class="step-dot"></div>
+            <span class="step-label">Synthesizing verdict</span>
           </div>
         </div>
       </div>
