@@ -3,7 +3,7 @@
 **Date:** 2026-03-25
 **Tester:** ClawMac (simulating Murch's critical eye)
 **Framework:** KC's empathy frame — explainability, auditability, confidence
-**Backend tested:** localhost:8002 (after bug fix)
+**Backend tested:** localhost:8000 (canonical port; was briefly 8002 during ClawMac testing, reverted)
 
 ---
 
