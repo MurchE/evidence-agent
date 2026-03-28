@@ -2,9 +2,9 @@
 
 ## Context
 Evidence Agent (JudiciAI) hackathon demo video. Deadline is today.
-- Backend running at http://localhost:8002
+- Backend running at http://localhost:8000
 - Frontend static files at /Users/murchewings/Projects/evidence-agent/frontend/
-- Port fix already applied (app.js points to 8002)
+- Port is 8000 (app.js and backend aligned)
 
 ## Your Tasks
 
@@ -13,7 +13,7 @@ Evidence Agent (JudiciAI) hackathon demo video. Deadline is today.
 # Check if port 3001 is in use
 lsof -i :3001 2>/dev/null | grep LISTEN || python3 -m http.server 3001 --directory /Users/murchewings/Projects/evidence-agent/frontend &
 sleep 2
-curl -s http://localhost:8002/health
+curl -s http://localhost:8000/health
 ```
 
 ### Task 2: Generate ElevenLabs voiceover
