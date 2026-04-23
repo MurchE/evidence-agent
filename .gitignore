@@ -5,3 +5,15 @@ __pycache__/
 venv/
 *.pyc
 .DS_Store
+# Media assets — kept out of git; store in Drive
+*.mp4
+*.mp3
+*.mov
+*.wav
+capture-*.png
+chrome_screen.png
+thumbnail-*.png
+tmp_*.png
+demo-frames/
+narrator-vo/
+raw-footage/
