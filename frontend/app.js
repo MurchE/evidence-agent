@@ -121,6 +121,43 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function clearElement(el) {
+  if (el) el.replaceChildren();
+}
+
+function makeEl(tag, className = "", text = "") {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== "") el.textContent = String(text);
+  return el;
+}
+
+function clampScore(value, fallback = 0) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(0, Math.min(10, num));
+}
+
+function safeHttpUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.href;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function displayDomain(url) {
+  try {
+    return new URL(url).hostname.replace("www.", "") || "source";
+  } catch {
+    return "source";
+  }
+}
+
 function renderExampleClaims() {
   if (!exampleCarousel) return;
   exampleCarousel.innerHTML = EXAMPLE_CLAIMS.map((entry) => {
@@ -147,22 +184,30 @@ let playbackRate = 1.3;
 function renderSidebarHistory() {
   const history = getHistory();
   const container = document.getElementById("sidebarHistory");
+  clearElement(container);
   if (!history.length) {
-    container.innerHTML = '<p class="text-xs text-gray-600 text-center mt-8">No claims yet</p>';
+    container.appendChild(makeEl("p", "text-xs text-gray-600 text-center mt-8", "No claims yet"));
     return;
   }
-  container.innerHTML = history.map((h) => {
+
+  history.forEach((h) => {
     const style = VERDICT_STYLES[h.verdict] || VERDICT_STYLES.MURKY;
     const time = new Date(h.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const date = new Date(h.ts).toLocaleDateString();
-    return '<button onclick="claimInput.value=\'' + h.claim.replace(/'/g, "\\'") + '\';verify();toggleSidebar()" class="w-full text-left bg-gray-50 border border-border rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors">' +
-      '<p class="text-xs truncate text-gray-700">' + h.claim + '</p>' +
-      '<div class="flex items-center justify-between mt-1">' +
-        '<span class="text-[10px] text-muted">' + date + ' ' + time + '</span>' +
-        '<span class="text-[10px] font-bold ' + style.text + '">' + h.verdict + ' ' + h.confidence + '/10</span>' +
-      '</div>' +
-    '</button>';
-  }).join("");
+    const button = makeEl("button", "w-full text-left bg-gray-50 border border-border rounded-lg px-3 py-2.5 hover:bg-gray-100 transition-colors");
+    button.addEventListener("click", () => {
+      claimInput.value = h.claim || "";
+      verify();
+      toggleSidebar();
+    });
+
+    button.appendChild(makeEl("p", "text-xs truncate text-gray-700", h.claim || ""));
+    const meta = makeEl("div", "flex items-center justify-between mt-1");
+    meta.appendChild(makeEl("span", "text-[10px] text-muted", `${date} ${time}`));
+    meta.appendChild(makeEl("span", `text-[10px] font-bold ${style.text}`, `${h.verdict || "MURKY"} ${clampScore(h.confidence, 0)}/10`));
+    button.appendChild(meta);
+    container.appendChild(button);
+  });
 }
 
 // --- Voice selector ---
@@ -644,9 +689,11 @@ function renderCaseCard(type, text) {
   const answers = document.getElementById("followupAnswers");
   const isBull = type === "bull";
   const title = isBull ? "Bull Case" : "Bear Case";
-  const icon = isBull ? "🐂" : "🐻";
   const textColor = isBull ? "text-emerald-700" : "text-red-700";
-  answers.innerHTML += `<div class="case-card ${isBull ? "case-bull" : "case-bear"}"><p class="text-xs ${textColor} font-semibold mb-1">${icon} ${title}</p><p class="text-sm text-gray-700">${escapeHtml(text)}</p></div>`;
+  const card = makeEl("div", `case-card ${isBull ? "case-bull" : "case-bear"}`);
+  card.appendChild(makeEl("p", `text-xs ${textColor} font-semibold mb-1`, title));
+  card.appendChild(makeEl("p", "text-sm text-gray-700", text || ""));
+  answers.appendChild(card);
 }
 
 function askBullCase() {
@@ -829,7 +876,7 @@ function renderVerdict(data) {
   verdictLabel.textContent = v;
   verdictLabel.className = `text-3xl font-extrabold mb-2 ${style.text}`;
 
-  const conf = data.confidence || 0;
+  const conf = clampScore(data.confidence, 0);
   confidenceBar.style.width = `${conf * 10}%`;
   confidenceBar.className = `confidence-fill ${style.barBg}`;
   confidenceNum.textContent = `${conf}/10`;
@@ -837,12 +884,20 @@ function renderVerdict(data) {
   // Render summary with inline citation superscripts
   const summaryText = data.summary || "";
   const srcs = data.sources || [];
+  clearElement(verdictSummary);
   if (srcs.length > 0) {
-    verdictSummary.innerHTML = escapeHtml(summaryText) + " " +
-      srcs.map((_, i) => {
-        const num = i + 1;
-        return `<a href="#source-${num}" class="inline-citation" onclick="scrollToSource(${num});return false" title="Source ${num}">[${num}]</a>`;
-      }).join("");
+    verdictSummary.appendChild(document.createTextNode(`${summaryText} `));
+    srcs.forEach((_, i) => {
+      const num = i + 1;
+      const citation = makeEl("a", "inline-citation", `[${num}]`);
+      citation.href = `#source-${num}`;
+      citation.title = `Source ${num}`;
+      citation.addEventListener("click", (event) => {
+        event.preventDefault();
+        scrollToSource(num);
+      });
+      verdictSummary.appendChild(citation);
+    });
   } else {
     verdictSummary.textContent = summaryText;
   }
@@ -879,49 +934,70 @@ const STANCE_BADGE = {
 function renderSources(srcs) {
   if (!srcs.length) return;
   const sourceCount = document.getElementById("sourceCount");
-  if (sourceCount) sourceCount.textContent = srcs.length + " sources found — click to view details →";
+  if (sourceCount) sourceCount.textContent = srcs.length + " sources found - click to view details";
 
-  const cardHtml = srcs.map((s, i) => {
+  function buildSourceCard(s, i) {
     const num = i + 1;
-    const safeUrl = s.url || "";
-    let domain = "source";
-    try {
-      domain = new URL(safeUrl).hostname.replace("www.", "") || "source";
-    } catch {
-      domain = "source";
-    }
-    const badge = STANCE_BADGE[s.stance] || STANCE_BADGE.NEUTRAL;
-    const cred = s.credibility || 5;
+    const safeUrl = safeHttpUrl(s.url || "");
+    const domain = displayDomain(safeUrl);
+    const stance = ["FOR", "AGAINST", "NEUTRAL"].includes(s.stance) ? s.stance : "NEUTRAL";
+    const badge = STANCE_BADGE[stance] || STANCE_BADGE.NEUTRAL;
+    const cred = clampScore(s.credibility, 5);
     const credColor = cred >= 7 ? "text-emerald-600" : cred >= 4 ? "text-amber-600" : "text-red-600";
     const credBarColor = cred >= 7 ? "bg-emerald-500" : cred >= 4 ? "bg-amber-500" : "bg-red-500";
     const tier = getCredibilityTier(safeUrl);
     const tierLabel = TIER_LABELS[tier] || "";
-    const sourceLink = safeUrl ? `<a href="${safeUrl}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">View source &rarr;</a>` : "";
-    return `
-      <div id="source-${num}" class="source-card bg-panel border border-border rounded-xl p-4 transition-all duration-300">
-        <div class="flex items-center justify-between mb-2">
-          <div class="min-w-0 flex-1">
-            <span class="text-xs text-muted">${tier} ${domain} <span class="text-[10px] text-gray-400">${tierLabel}</span></span>
-            <h3 class="font-semibold text-sm leading-tight text-gray-800"><span class="text-blue-500 font-bold mr-1">[${num}]</span>${s.title || domain}</h3>
-          </div>
-          <span class="text-xs font-bold px-2 py-1 rounded border ${badge} shrink-0 ml-2">${s.stance}</span>
-        </div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-muted">Credibility</span>
-          <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div class="h-full rounded-full ${credBarColor}" style="width: ${cred * 10}%"></div>
-          </div>
-          <span class="text-xs font-semibold ${credColor}">${cred}/10</span>
-        </div>
-        ${s.quote ? '<blockquote class="border-l-2 border-gray-300 pl-3 text-sm text-gray-500 italic mt-2">"' + s.quote + '"</blockquote>' : ""}
-        ${sourceLink}
-      </div>`;
-  }).join("");
+
+    const card = makeEl("div", "source-card bg-panel border border-border rounded-xl p-4 transition-all duration-300");
+    card.id = `source-${num}`;
+
+    const header = makeEl("div", "flex items-center justify-between mb-2");
+    const titleWrap = makeEl("div", "min-w-0 flex-1");
+    const meta = makeEl("span", "text-xs text-muted", `${tier} ${domain} `);
+    meta.appendChild(makeEl("span", "text-[10px] text-gray-400", tierLabel));
+    titleWrap.appendChild(meta);
+
+    const heading = makeEl("h3", "font-semibold text-sm leading-tight text-gray-800");
+    heading.appendChild(makeEl("span", "text-blue-500 font-bold mr-1", `[${num}]`));
+    heading.appendChild(document.createTextNode(s.title || domain));
+    titleWrap.appendChild(heading);
+    header.appendChild(titleWrap);
+    header.appendChild(makeEl("span", `text-xs font-bold px-2 py-1 rounded border ${badge} shrink-0 ml-2`, stance));
+    card.appendChild(header);
+
+    const credibility = makeEl("div", "flex items-center gap-2 mb-2");
+    credibility.appendChild(makeEl("span", "text-xs text-muted", "Credibility"));
+    const bar = makeEl("div", "w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden");
+    const fill = makeEl("div", `h-full rounded-full ${credBarColor}`);
+    fill.style.width = `${cred * 10}%`;
+    bar.appendChild(fill);
+    credibility.appendChild(bar);
+    credibility.appendChild(makeEl("span", `text-xs font-semibold ${credColor}`, `${cred}/10`));
+    card.appendChild(credibility);
+
+    if (s.quote) {
+      card.appendChild(makeEl("blockquote", "border-l-2 border-gray-300 pl-3 text-sm text-gray-500 italic mt-2", `"${s.quote}"`));
+    }
+
+    if (safeUrl) {
+      const link = makeEl("a", "text-xs text-blue-600 hover:underline mt-2 inline-block", "View source ->");
+      link.href = safeUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      card.appendChild(link);
+    }
+
+    return card;
+  }
 
   // Populate both desktop panel and mobile inline cards
-  sourceCards.innerHTML = cardHtml;
+  clearElement(sourceCards);
+  srcs.forEach((s, i) => sourceCards.appendChild(buildSourceCard(s, i)));
   const mobileCards = document.getElementById("mobileSourceCards");
-  if (mobileCards) mobileCards.innerHTML = cardHtml;
+  if (mobileCards) {
+    clearElement(mobileCards);
+    srcs.forEach((s, i) => mobileCards.appendChild(buildSourceCard(s, i)));
+  }
 
   sources.classList.remove("hidden");
 }
@@ -949,22 +1025,29 @@ function renderHistory() {
   if (!history.length) { historySection.classList.add("hidden"); return; }
 
   historySection.classList.remove("hidden");
-  historyList.innerHTML = history.map((h) => {
+  clearElement(historyList);
+  history.forEach((h) => {
     const style = VERDICT_STYLES[h.verdict] || VERDICT_STYLES.MURKY;
     const time = new Date(h.ts).toLocaleString();
-    return `
-      <button onclick="claimInput.value='${h.claim.replace(/'/g, "\\'")}';verify()"
-        class="w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3 hover:border-gray-600 transition-colors flex items-center justify-between gap-3">
-        <div class="flex-1 min-w-0">
-          <p class="text-sm truncate">${h.claim}</p>
-          <span class="text-xs text-gray-500">${time}</span>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <span class="text-xs font-bold ${style.text}">${h.verdict}</span>
-          <span class="text-xs text-gray-500">${h.confidence}/10</span>
-        </div>
-      </button>`;
-  }).join("");
+
+    const button = makeEl("button", "w-full text-left bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3 hover:border-gray-600 transition-colors flex items-center justify-between gap-3");
+    button.addEventListener("click", () => {
+      claimInput.value = h.claim || "";
+      verify();
+    });
+
+    const details = makeEl("div", "flex-1 min-w-0");
+    details.appendChild(makeEl("p", "text-sm truncate", h.claim || ""));
+    details.appendChild(makeEl("span", "text-xs text-gray-500", time));
+    button.appendChild(details);
+
+    const result = makeEl("div", "flex items-center gap-2 shrink-0");
+    result.appendChild(makeEl("span", `text-xs font-bold ${style.text}`, h.verdict || "MURKY"));
+    result.appendChild(makeEl("span", "text-xs text-gray-500", `${clampScore(h.confidence, 0)}/10`));
+    button.appendChild(result);
+
+    historyList.appendChild(button);
+  });
 }
 
 // Show history on load
@@ -979,7 +1062,7 @@ async function askFollowup(caseMode = null) {
 
   const answers = document.getElementById("followupAnswers");
   const loadingId = `followupLoading-${Date.now()}`;
-  const promptLabel = caseMode === "bull" ? "🐂 Bull Case Prompt" : caseMode === "bear" ? "🐻 Bear Case Prompt" : "You asked";
+  const promptLabel = caseMode === "bull" ? "Bull Case Prompt" : caseMode === "bear" ? "Bear Case Prompt" : "You asked";
   const promptClass = caseMode === "bull"
     ? "case-card case-bull"
     : caseMode === "bear"
@@ -987,12 +1070,13 @@ async function askFollowup(caseMode = null) {
       : "text-sm bg-panel border border-border rounded-lg px-4 py-3";
 
   // Show question immediately
-  answers.innerHTML += `
-    <div class="${promptClass}">
-      <p class="text-xs text-blue-600 font-semibold mb-1">${promptLabel}:</p>
-      <p class="text-sm text-gray-700">${escapeHtml(question)}</p>
-      <p class="text-gray-500 mt-2 italic" id="${loadingId}">Reviewing evidence...</p>
-    </div>`;
+  const promptCard = makeEl("div", promptClass);
+  promptCard.appendChild(makeEl("p", "text-xs text-blue-600 font-semibold mb-1", `${promptLabel}:`));
+  promptCard.appendChild(makeEl("p", "text-sm text-gray-700", question));
+  const loading = makeEl("p", "text-gray-500 mt-2 italic", "Reviewing evidence...");
+  loading.id = loadingId;
+  promptCard.appendChild(loading);
+  answers.appendChild(promptCard);
   input.value = "";
 
   try {
@@ -1012,7 +1096,7 @@ async function askFollowup(caseMode = null) {
     const data = await resp.json();
 
     const loading = document.getElementById(loadingId);
-    if (loading) loading.outerHTML = `<p class="mt-2 text-sm text-gray-700">${escapeHtml(data.answer)}</p>`;
+    if (loading) loading.replaceWith(makeEl("p", "mt-2 text-sm text-gray-700", data.answer || ""));
 
     // Narrate the answer
     speakText(data.answer);
