@@ -2,6 +2,9 @@
 
 import os
 import json
+import copy
+import time
+import uuid
 import anthropic
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,10 +50,7 @@ VOICE_MAP = {
 
 class FollowUpRequest(BaseModel):
     question: str
-    claim: str
-    verdict: str
-    summary: str
-    sources: list[dict]
+    result_id: str | None = None
 
 
 DEFAULT_MOCK_RESULT = {
@@ -168,6 +168,44 @@ MOCK_RESULTS_BY_CLAIM = {
     },
 }
 
+RESULT_TTL_SECONDS = int(os.getenv("RESULT_TTL_SECONDS", "3600"))
+_RESULT_STORE: dict[str, tuple[float, dict]] = {}
+
+
+def _cleanup_results() -> None:
+    now = time.time()
+    expired = [
+        result_id
+        for result_id, (created_at, _) in _RESULT_STORE.items()
+        if now - created_at > RESULT_TTL_SECONDS
+    ]
+    for result_id in expired:
+        _RESULT_STORE.pop(result_id, None)
+
+
+def _store_result(result: dict) -> str:
+    _cleanup_results()
+    result_id = uuid.uuid4().hex
+    _RESULT_STORE[result_id] = (time.time(), copy.deepcopy(result))
+    return result_id
+
+
+def _result_with_id(result: dict, claim: str) -> dict:
+    output = copy.deepcopy(result)
+    output["claim"] = claim
+    output["result_id"] = _store_result(output)
+    return output
+
+
+def _load_result(result_id: str | None) -> dict:
+    if not result_id:
+        raise HTTPException(status_code=400, detail="result_id is required")
+    _cleanup_results()
+    stored = _RESULT_STORE.get(result_id)
+    if not stored:
+        raise HTTPException(status_code=404, detail="Verification result not found")
+    return copy.deepcopy(stored[1])
+
 
 def _normalize_claim(claim: str) -> str:
     return " ".join(claim.lower().split())
@@ -183,11 +221,13 @@ async def verify_claim(req: ClaimRequest):
         raise HTTPException(status_code=400, detail="Claim cannot be empty")
 
     if MOCK_MODE:
-        return _get_mock_result(req.claim)
+        claim = req.claim.strip()
+        return _result_with_id(_get_mock_result(claim), claim)
 
+    claim = req.claim.strip()
     agent = EvidenceAgent()
-    result = await agent.verify(req.claim.strip())
-    return result
+    result = await agent.verify(claim)
+    return _result_with_id(result, claim)
 
 
 @app.post("/tts", dependencies=[Depends(require_paid_auth)])
@@ -244,7 +284,23 @@ async def _mock_stream(claim: str):
 
     yield _sse("step", {"step": "synthesize", "message": "Synthesizing final verdict..."})
     await asyncio.sleep(1.0)
-    yield _sse("result", mock_result)
+    yield _sse("result", _result_with_id(mock_result, claim.strip()))
+
+
+async def _with_stored_stream_results(events, claim: str):
+    async for event in events:
+        if not event.startswith("event: result"):
+            yield event
+            continue
+
+        data_line = next((line for line in event.splitlines() if line.startswith("data: ")), "")
+        try:
+            result = json.loads(data_line.removeprefix("data: "))
+        except json.JSONDecodeError:
+            yield event
+            continue
+
+        yield f"event: result\ndata: {json.dumps(_result_with_id(result, claim))}\n\n"
 
 
 @app.get("/verify/stream", dependencies=[Depends(require_paid_auth)])
@@ -258,7 +314,7 @@ async def verify_claim_stream(claim: str = Query(..., min_length=1)):
 
     agent = EvidenceAgent()
     return StreamingResponse(
-        agent.verify_stream(claim.strip()),
+        _with_stored_stream_results(agent.verify_stream(claim.strip()), claim.strip()),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -273,8 +329,14 @@ async def followup(req: FollowUpRequest):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
+    verified = _load_result(req.result_id)
+    claim = verified.get("claim", "")
+    verdict = verified.get("verdict", "MURKY")
+    summary = verified.get("summary", "")
+    verified_sources = verified.get("sources", [])
+
     if MOCK_MODE:
-        normalized_claim = _normalize_claim(req.claim)
+        normalized_claim = _normalize_claim(claim)
         q = req.question.lower()
         if "coffee" in normalized_claim and "against" in q:
             return {"answer": "The strongest challenge is that most positive findings are observational rather than randomized prevention trials, so causality is not fully proven. Residual confounding from lifestyle factors and socioeconomic differences can still influence the association. In other words, coffee may be a marker of a healthier profile in some cohorts rather than the sole causal factor."}
@@ -289,14 +351,14 @@ async def followup(req: FollowUpRequest):
     sources_text = "\n".join(
         f"- [{s.get('stance', 'NEUTRAL')}] {s.get('title', '')}: \"{s.get('quote', '')}\" "
         f"(credibility: {s.get('credibility', 5)}, url: {s.get('url', '')})"
-        for s in req.sources
+        for s in verified_sources
     )
 
     prompt = f"""You are Evidence Agent, a claim verification assistant. The user already verified a claim and now has a follow-up question.
 
-ORIGINAL CLAIM: {req.claim}
-VERDICT: {req.verdict}
-SUMMARY: {req.summary}
+ORIGINAL CLAIM: {claim}
+VERDICT: {verdict}
+SUMMARY: {summary}
 
 EVIDENCE SOURCES:
 {sources_text}

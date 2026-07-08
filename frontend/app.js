@@ -1058,6 +1058,10 @@ async function askFollowup(caseMode = null) {
   const input = document.getElementById("followupInput");
   const question = input.value.trim();
   if (!question || !lastResult) return;
+  if (!lastResult.result_id) {
+    showError("Follow-up requires a server-verified result. Run a live verification first.");
+    return;
+  }
   dismissError();
 
   const answers = document.getElementById("followupAnswers");
@@ -1085,10 +1089,7 @@ async function askFollowup(caseMode = null) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question,
-        claim: claimInput.value.trim(),
-        verdict: lastResult.verdict,
-        summary: lastResult.summary,
-        sources: lastResult.sources || [],
+        result_id: lastResult.result_id,
       }),
     });
 
