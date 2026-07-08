@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 
-os.environ.setdefault("EVIDENCE_AGENT_API_TOKEN", "test-token")
-os.environ.setdefault("CORS_ALLOW_ORIGINS", "https://app.example.test")
+os.environ["EVIDENCE_AGENT_API_TOKEN"] = "test-token"
+os.environ["CORS_ALLOW_ORIGINS"] = "https://app.example.test"
 
 from main import app  # noqa: E402
 
