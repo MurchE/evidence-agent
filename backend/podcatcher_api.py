@@ -13,13 +13,14 @@ import json
 import asyncio
 
 import anthropic
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from firecrawl_client import FirecrawlClient
+from security import cors_allowlist, require_paid_auth
 from voice_synthesizer import VoiceSynthesizer
 
 load_dotenv()
@@ -28,9 +29,9 @@ app = FastAPI(title="Podcatcher API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_allowlist(),
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
 
 
@@ -53,7 +54,7 @@ SEARCH RESULTS:
 Respond with just the summary, no preamble."""
 
 
-@app.post("/research")
+@app.post("/research", dependencies=[Depends(require_paid_auth)])
 async def research(req: ResearchRequest):
     """Search Firecrawl for a topic and return a summary + sources."""
     topic = req.topic.strip()
@@ -94,7 +95,7 @@ async def research(req: ResearchRequest):
     return {"summary": summary, "sources": sources}
 
 
-@app.post("/narrate")
+@app.post("/narrate", dependencies=[Depends(require_paid_auth)])
 async def narrate(req: NarrateRequest):
     """Convert text to speech via ElevenLabs. Returns MP3 audio bytes."""
     text = req.text.strip()

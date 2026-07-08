@@ -3,13 +3,14 @@
 import os
 import json
 import anthropic
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from agent import EvidenceAgent
+from security import cors_allowlist, require_paid_auth
 from voice_synthesizer import VoiceSynthesizer
 
 load_dotenv()
@@ -20,9 +21,9 @@ app = FastAPI(title="Evidence Agent", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_allowlist(),
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
 
 
@@ -176,7 +177,7 @@ def _get_mock_result(claim: str) -> dict:
     return MOCK_RESULTS_BY_CLAIM.get(_normalize_claim(claim), DEFAULT_MOCK_RESULT)
 
 
-@app.post("/verify")
+@app.post("/verify", dependencies=[Depends(require_paid_auth)])
 async def verify_claim(req: ClaimRequest):
     if not req.claim.strip():
         raise HTTPException(status_code=400, detail="Claim cannot be empty")
@@ -189,7 +190,7 @@ async def verify_claim(req: ClaimRequest):
     return result
 
 
-@app.post("/tts")
+@app.post("/tts", dependencies=[Depends(require_paid_auth)])
 async def text_to_speech(req: TTSRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
@@ -246,7 +247,7 @@ async def _mock_stream(claim: str):
     yield _sse("result", mock_result)
 
 
-@app.get("/verify/stream")
+@app.get("/verify/stream", dependencies=[Depends(require_paid_auth)])
 async def verify_claim_stream(claim: str = Query(..., min_length=1)):
     if MOCK_MODE:
         return StreamingResponse(
@@ -266,7 +267,7 @@ async def verify_claim_stream(claim: str = Query(..., min_length=1)):
     )
 
 
-@app.post("/followup")
+@app.post("/followup", dependencies=[Depends(require_paid_auth)])
 async def followup(req: FollowUpRequest):
     """Answer a follow-up question about a previous verification result."""
     if not req.question.strip():
