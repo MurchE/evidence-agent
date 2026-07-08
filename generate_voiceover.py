@@ -1,8 +1,11 @@
 import os
+from pathlib import Path
+
 import requests
 from dotenv import load_dotenv
 
-load_dotenv('/Users/murchewings/Projects/evidence-agent/backend/.env')
+PROJECT_ROOT = Path(__file__).resolve().parent
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
 api_key = os.environ['ELEVENLABS_API_KEY']
 voice_id = 'k8OsasklrEkKLNYd4ykK'
 
@@ -35,9 +38,11 @@ data = {
 }
 response = requests.post(url, json=data, headers=headers)
 if response.status_code == 200:
-    with open('/Users/murchewings/Projects/evidence-agent/demo_voiceover.mp3', 'wb') as f:
+    output_path = Path(os.getenv("VOICEOVER_OUT", PROJECT_ROOT / "demo_voiceover.mp3"))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, 'wb') as f:
         f.write(response.content)
-    print("Voiceover saved to demo_voiceover.mp3")
+    print(f"Voiceover saved to {output_path}")
     print(f"File size: {len(response.content)} bytes")
 else:
     print(f"Error: {response.status_code} - {response.text}")

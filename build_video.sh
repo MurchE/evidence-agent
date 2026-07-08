@@ -2,9 +2,14 @@
 # Build demo video from screenshots + voiceover
 # Total voiceover: ~38.3s, 6 frames
 
-FRAMES=/Users/murchewings/Projects/evidence-agent/demo-frames
-OUT=/Users/murchewings/Projects/evidence-agent/demo-video.mp4
-AUDIO=/Users/murchewings/Projects/evidence-agent/demo_voiceover.mp3
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRAMES="${DEMO_FRAMES_DIR:-$PROJECT_ROOT/demo-frames}"
+OUT="${DEMO_VIDEO_OUT:-$PROJECT_ROOT/demo-video.mp4}"
+AUDIO="${VOICEOVER_OUT:-$PROJECT_ROOT/demo_voiceover.mp3}"
+CONCAT_FILE="$(mktemp)"
+trap 'rm -f "$CONCAT_FILE"' EXIT
 
 # Create concat file with durations matching voiceover sections:
 # 01_landing: "Your boss told you..." intro (0-7s) = 7s
@@ -14,24 +19,20 @@ AUDIO=/Users/murchewings/Projects/evidence-agent/demo_voiceover.mp3
 # 05_bull_case: "Hit the bull..." (28-33s) = 5s
 # 06_bear_case: "It reads the verdict..." + outro (33-39s) = 6s
 
-cat > /tmp/frames.txt << 'EOF'
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/01_landing.png'
-duration 7
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/02_claim_entered.png'
-duration 5
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/03_verdict.png'
-duration 10
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/04_sources.png'
-duration 6
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/05_bull_case.png'
-duration 5
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/06_bear_case.png'
-duration 6
-file '/Users/murchewings/Projects/evidence-agent/demo-frames/06_bear_case.png'
-duration 0.5
-EOF
+add_frame() {
+  printf "file '%s/%s'\n" "$FRAMES" "$1" >> "$CONCAT_FILE"
+  printf "duration %s\n" "$2" >> "$CONCAT_FILE"
+}
 
-ffmpeg -y -f concat -safe 0 -i /tmp/frames.txt -i "$AUDIO" \
+add_frame "01_landing.png" 7
+add_frame "02_claim_entered.png" 5
+add_frame "03_verdict.png" 10
+add_frame "04_sources.png" 6
+add_frame "05_bull_case.png" 5
+add_frame "06_bear_case.png" 6
+add_frame "06_bear_case.png" 0.5
+
+ffmpeg -y -f concat -safe 0 -i "$CONCAT_FILE" -i "$AUDIO" \
   -vf "scale=1280:800:force_original_aspect_ratio=decrease,pad=1280:800:(ow-iw)/2:(oh-ih)/2:white,format=yuv420p" \
   -c:v libx264 -preset medium -crf 23 \
   -c:a aac -b:a 128k \

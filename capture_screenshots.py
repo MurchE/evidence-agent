@@ -1,8 +1,13 @@
 """Capture demo screenshots of JudiciAI app using Playwright CDP."""
-from playwright.sync_api import sync_playwright
 import base64
+import os
+from pathlib import Path
 
-FRAMES_DIR = "/Users/murchewings/Projects/evidence-agent/demo-frames"
+from playwright.sync_api import sync_playwright
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+FRAMES_DIR = Path(os.getenv("DEMO_FRAMES_DIR", PROJECT_ROOT / "demo-frames"))
+FRONTEND_URL = os.getenv("DEMO_FRONTEND_URL", "http://127.0.0.1:3001/index_demo.html")
 
 def take_cdp_screenshot(page, path):
     """Take screenshot via CDP to bypass font waiting."""
@@ -15,9 +20,10 @@ def take_cdp_screenshot(page, path):
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 1280, "height": 800})
+    FRAMES_DIR.mkdir(parents=True, exist_ok=True)
 
     # Use demo HTML with local Tailwind (headless Chromium has no internet)
-    page.goto("http://127.0.0.1:3001/index_demo.html", wait_until="load", timeout=30000)
+    page.goto(FRONTEND_URL, wait_until="load", timeout=30000)
     page.wait_for_timeout(2000)
     ss_count = page.evaluate("() => document.styleSheets.length")
     has_body = page.evaluate("() => !!document.body")
