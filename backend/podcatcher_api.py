@@ -13,6 +13,7 @@ import json
 import asyncio
 
 import anthropic
+import httpx
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -63,8 +64,11 @@ async def research(req: ResearchRequest):
         raise HTTPException(status_code=400, detail="topic cannot be empty")
 
     # Search
-    fc = FirecrawlClient()
-    results = await fc.search(topic, limit=4)
+    try:
+        fc = FirecrawlClient()
+        results = await fc.search(topic, limit=4)
+    except (RuntimeError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=502, detail="Search provider failed") from exc
 
     if not results:
         return {"summary": "No results found for this topic.", "sources": []}
@@ -77,14 +81,17 @@ async def research(req: ResearchRequest):
 
     # Summarize with Claude
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-    resp = client.messages.create(
-        model="claude-haiku-4-5",
-        max_tokens=200,
-        messages=[{
-            "role": "user",
-            "content": SUMMARIZE_PROMPT.format(topic=topic, results=results_text)
-        }]
-    )
+    try:
+        resp = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=200,
+            messages=[{
+                "role": "user",
+                "content": SUMMARIZE_PROMPT.format(topic=topic, results=results_text)
+            }]
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Summary provider failed") from exc
     summary = resp.content[0].text.strip()
 
     # Return slim sources (no raw content)
@@ -106,12 +113,15 @@ async def narrate(req: NarrateRequest):
     try:
         synth = VoiceSynthesizer()
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail=str(e))
 
-    audio_bytes = await synth.synthesize(
-        text=text,
-        voice_id=req.voice_id or "21m00Tcm4TlvDq8ikWAM",
-    )
+    try:
+        audio_bytes = await synth.synthesize(
+            text=text,
+            voice_id=req.voice_id or "21m00Tcm4TlvDq8ikWAM",
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Text-to-speech provider failed") from exc
     return Response(content=audio_bytes, media_type="audio/mpeg")
 
 

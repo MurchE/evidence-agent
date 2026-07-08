@@ -10,6 +10,10 @@ from firecrawl_client import FirecrawlClient
 from classifier import EvidenceClassifier
 
 
+class UpstreamServiceError(RuntimeError):
+    """Raised when a paid upstream provider fails and no reliable result exists."""
+
+
 DECOMPOSE_PROMPT = """You are a research query strategist. Given a claim to verify, generate exactly 3 diverse search queries that would help find evidence FOR and AGAINST the claim. Make queries specific and varied in angle.
 
 CLAIM: {claim}
@@ -52,8 +56,10 @@ class EvidenceAgent:
 
         seen_urls = set()
         unique = []
+        failures = 0
         for batch in results:
             if isinstance(batch, Exception):
+                failures += 1
                 continue
             for item in batch:
                 url = item.get("url", "")
@@ -61,13 +67,19 @@ class EvidenceAgent:
                     seen_urls.add(url)
                     unique.append(item)
 
+        if failures == len(results):
+            raise UpstreamServiceError("Search provider failed")
+
         return unique[:8]  # cap at 8 sources
 
     async def verify(self, claim: str) -> dict:
         """Full verification pipeline: decompose → search → classify → verdict."""
 
         # Step 1: Decompose claim into search queries
-        queries = self._decompose_claim(claim)
+        try:
+            queries = self._decompose_claim(claim)
+        except Exception as exc:
+            raise UpstreamServiceError("LLM query decomposition failed") from exc
 
         # Step 2: Search web via Firecrawl
         sources = await self._search_all(queries)
@@ -86,16 +98,26 @@ class EvidenceAgent:
             loop.run_in_executor(None, self.classifier.classify_source, claim, s)
             for s in sources
         ]
-        classified = await asyncio.gather(*classify_tasks)
+        classified_results = await asyncio.gather(*classify_tasks, return_exceptions=True)
+        classified = [
+            result for result in classified_results
+            if not isinstance(result, Exception)
+        ]
+
+        if not classified:
+            raise UpstreamServiceError("Evidence classification failed")
 
         # Sort by relevance
         classified.sort(key=lambda x: x.get("relevance", 0), reverse=True)
         top_sources = classified[:5]
 
         # Step 4: Synthesize verdict
-        verdict_data = await loop.run_in_executor(
-            None, self.classifier.synthesize_verdict, claim, top_sources
-        )
+        try:
+            verdict_data = await loop.run_in_executor(
+                None, self.classifier.synthesize_verdict, claim, top_sources
+            )
+        except Exception as exc:
+            raise UpstreamServiceError("Verdict synthesis failed") from exc
 
         return {
             "verdict": verdict_data.get("verdict", "MURKY"),
@@ -112,12 +134,20 @@ class EvidenceAgent:
 
         # Step 1: Decompose
         yield _sse("step", {"step": "decompose", "message": "Decomposing claim into search queries..."})
-        queries = self._decompose_claim(claim)
+        try:
+            queries = self._decompose_claim(claim)
+        except Exception:
+            yield _sse("upstream_error", {"detail": "LLM query decomposition failed"})
+            return
         yield _sse("queries", {"queries": queries})
 
         # Step 2: Search
         yield _sse("step", {"step": "search", "message": f"Searching {len(queries)} queries via Firecrawl..."})
-        sources = await self._search_all(queries)
+        try:
+            sources = await self._search_all(queries)
+        except UpstreamServiceError as exc:
+            yield _sse("upstream_error", {"detail": str(exc)})
+            return
         yield _sse("search_done", {"count": len(sources)})
 
         if not sources:
@@ -138,7 +168,10 @@ class EvidenceAgent:
 
         classified = []
         for i, task in enumerate(asyncio.as_completed(classify_tasks)):
-            result = await task
+            try:
+                result = await task
+            except Exception:
+                continue
             classified.append(result)
             yield _sse("source_classified", {
                 "index": i + 1,
@@ -147,14 +180,22 @@ class EvidenceAgent:
                 "stance": result.get("stance", "NEUTRAL"),
             })
 
+        if not classified:
+            yield _sse("upstream_error", {"detail": "Evidence classification failed"})
+            return
+
         classified.sort(key=lambda x: x.get("relevance", 0), reverse=True)
         top_sources = classified[:5]
 
         # Step 4: Synthesize
         yield _sse("step", {"step": "synthesize", "message": "Synthesizing final verdict..."})
-        verdict_data = await loop.run_in_executor(
-            None, self.classifier.synthesize_verdict, claim, top_sources
-        )
+        try:
+            verdict_data = await loop.run_in_executor(
+                None, self.classifier.synthesize_verdict, claim, top_sources
+            )
+        except Exception:
+            yield _sse("upstream_error", {"detail": "Verdict synthesis failed"})
+            return
 
         yield _sse("result", {
             "verdict": verdict_data.get("verdict", "MURKY"),

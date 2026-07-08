@@ -381,6 +381,14 @@ async function verify() {
       }, 400);
     });
 
+    evtSource.addEventListener("upstream_error", (e) => {
+      const data = JSON.parse(e.data);
+      evtSource.close();
+      status.classList.add("hidden");
+      setVerifyState(false);
+      showError(data.detail || "An upstream evidence service failed. Try again later.", () => verify());
+    });
+
     evtSource.onerror = () => {
       evtSource.close();
       status.classList.add("hidden");

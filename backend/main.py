@@ -6,13 +6,14 @@ import copy
 import time
 import uuid
 import anthropic
+import httpx
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-from agent import EvidenceAgent
+from agent import EvidenceAgent, UpstreamServiceError
 from security import cors_allowlist, reject_oversized_body, require_paid_auth
 from voice_synthesizer import VoiceSynthesizer
 
@@ -226,8 +227,11 @@ async def verify_claim(req: ClaimRequest):
         return _result_with_id(_get_mock_result(claim), claim)
 
     claim = req.claim.strip()
-    agent = EvidenceAgent()
-    result = await agent.verify(claim)
+    try:
+        agent = EvidenceAgent()
+        result = await agent.verify(claim)
+    except (RuntimeError, UpstreamServiceError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
     return _result_with_id(result, claim)
 
 
@@ -239,7 +243,7 @@ async def text_to_speech(req: TTSRequest):
     try:
         synth = VoiceSynthesizer()
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail=str(e))
 
     # Resolve voice: explicit ID > name lookup > default
     voice_id = req.voice_id
@@ -247,10 +251,13 @@ async def text_to_speech(req: TTSRequest):
         voice_id = VOICE_MAP.get(req.voice.lower(), "21m00Tcm4TlvDq8ikWAM")
     voice_id = voice_id or "21m00Tcm4TlvDq8ikWAM"
 
-    audio_bytes = await synth.synthesize(
-        text=req.text.strip(),
-        voice_id=voice_id,
-    )
+    try:
+        audio_bytes = await synth.synthesize(
+            text=req.text.strip(),
+            voice_id=voice_id,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Text-to-speech provider failed") from exc
     return Response(content=audio_bytes, media_type="audio/mpeg")
 
 
@@ -313,7 +320,10 @@ async def verify_claim_stream(claim: str = Query(..., min_length=1, max_length=1
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
-    agent = EvidenceAgent()
+    try:
+        agent = EvidenceAgent()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
     return StreamingResponse(
         _with_stored_stream_results(agent.verify_stream(claim.strip()), claim.strip()),
         media_type="text/event-stream",
@@ -369,11 +379,14 @@ USER'S FOLLOW-UP QUESTION: {req.question}
 Answer concisely (2-4 sentences) based on the evidence above. If the question asks about something not covered by the sources, say so. Stay factual and cite specific sources when relevant."""
 
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-    resp = client.messages.create(
-        model=os.getenv("FOLLOWUP_MODEL", "claude-haiku-4-5"),
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        resp = client.messages.create(
+            model=os.getenv("FOLLOWUP_MODEL", "claude-haiku-4-5"),
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Follow-up provider failed") from exc
 
     return {"answer": resp.content[0].text.strip()}
 
