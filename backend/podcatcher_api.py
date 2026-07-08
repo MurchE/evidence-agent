@@ -16,11 +16,11 @@ import anthropic
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from firecrawl_client import FirecrawlClient
-from security import cors_allowlist, require_paid_auth
+from security import cors_allowlist, reject_oversized_body, require_paid_auth
 from voice_synthesizer import VoiceSynthesizer
 
 load_dotenv()
@@ -33,15 +33,16 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+app.middleware("http")(reject_oversized_body)
 
 
 class ResearchRequest(BaseModel):
-    topic: str
+    topic: str = Field(..., max_length=1000)
 
 
 class NarrateRequest(BaseModel):
-    text: str
-    voice_id: str | None = None
+    text: str = Field(..., max_length=4000)
+    voice_id: str | None = Field(default=None, max_length=128)
 
 
 SUMMARIZE_PROMPT = """You are a podcast research assistant. The user is listening to a podcast and wants quick context on a topic they heard. Summarize the key facts from these search results in 2-3 concise sentences. Be direct and informative — no fluff.

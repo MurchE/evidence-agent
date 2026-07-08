@@ -9,11 +9,11 @@ import anthropic
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from agent import EvidenceAgent
-from security import cors_allowlist, require_paid_auth
+from security import cors_allowlist, reject_oversized_body, require_paid_auth
 from voice_synthesizer import VoiceSynthesizer
 
 load_dotenv()
@@ -28,16 +28,17 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+app.middleware("http")(reject_oversized_body)
 
 
 class ClaimRequest(BaseModel):
-    claim: str
+    claim: str = Field(..., max_length=1000)
 
 
 class TTSRequest(BaseModel):
-    text: str
-    voice_id: str | None = None
-    voice: str | None = None  # name-based selection
+    text: str = Field(..., max_length=4000)
+    voice_id: str | None = Field(default=None, max_length=128)
+    voice: str | None = Field(default=None, max_length=64)  # name-based selection
 
 # ElevenLabs voice name → ID mapping
 VOICE_MAP = {
@@ -49,8 +50,8 @@ VOICE_MAP = {
 
 
 class FollowUpRequest(BaseModel):
-    question: str
-    result_id: str | None = None
+    question: str = Field(..., max_length=1000)
+    result_id: str | None = Field(default=None, max_length=64)
 
 
 DEFAULT_MOCK_RESULT = {
@@ -304,7 +305,7 @@ async def _with_stored_stream_results(events, claim: str):
 
 
 @app.get("/verify/stream", dependencies=[Depends(require_paid_auth)])
-async def verify_claim_stream(claim: str = Query(..., min_length=1)):
+async def verify_claim_stream(claim: str = Query(..., min_length=1, max_length=1000)):
     if MOCK_MODE:
         return StreamingResponse(
             _mock_stream(claim.strip()),

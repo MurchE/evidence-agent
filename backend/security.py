@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import os
 import secrets
+from collections.abc import Awaitable, Callable
 
 from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 
 
 DEFAULT_ALLOWED_ORIGINS = (
@@ -14,6 +16,7 @@ DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 )
+DEFAULT_MAX_BODY_BYTES = 32_768
 
 def cors_allowlist() -> list[str]:
     """Return configured CORS origins without allowing wildcard production access."""
@@ -22,6 +25,33 @@ def cors_allowlist() -> list[str]:
     if not origins:
         return list(DEFAULT_ALLOWED_ORIGINS)
     return [origin for origin in origins if origin != "*"]
+
+
+def max_body_bytes() -> int:
+    raw = os.getenv("MAX_REQUEST_BODY_BYTES", str(DEFAULT_MAX_BODY_BYTES))
+    try:
+        return max(1024, int(raw))
+    except ValueError:
+        return DEFAULT_MAX_BODY_BYTES
+
+
+async def reject_oversized_body(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            size = int(content_length)
+        except ValueError:
+            size = 0
+        if size > max_body_bytes():
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "Request body too large"},
+            )
+
+    return await call_next(request)
 
 
 def _extract_token(request: Request) -> str:
